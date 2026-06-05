@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+SPACK_VIEW="$PROJECT_ROOT/.spack-env/view"
+
+export PATH="$SPACK_VIEW/bin:$PATH"
+
+export LD_LIBRARY_PATH="$SPACK_VIEW/lib:$SPACK_VIEW/lib64:${LD_LIBRARY_PATH:-}"
+
+export PKG_CONFIG_PATH="$SPACK_VIEW/lib/pkgconfig:$SPACK_VIEW/lib64/pkgconfig:${PKG_CONFIG_PATH:-}"
+
+exec  ~/.cargo/bin/arf "$@"

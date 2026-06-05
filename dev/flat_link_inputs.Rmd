@@ -1,0 +1,90 @@
+---
+title: "flat_link_inputs.Rmd empty"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r development, include=FALSE}
+library(testthat)
+```
+
+```{r development-load}
+# Load already included functions if relevant
+pkgload::load_all(export_all = FALSE)
+```
+
+# link_inputs
+
+```{r development-link_inputs}
+# Prepare the code of your function here
+```
+
+```{r function-link_inputs}
+#' link_inputs Title#' Symlink Google Drive Data Space to Local Data Directory
+#'
+#' This function creates a symbolic link from a Google Drive data space (specified in a config file)
+#' to a local "data" directory. It checks for the existence of the Google Drive path and the local
+#' data directory, creates the local directory if it does not exist, and then creates the symlink.
+#'
+#' @param cfg_path Character. Path to the configuration file containing the Google Drive data space path.
+#'
+#' @return Logical. Returns TRUE if the linking is successful; otherwise, stops with an error.
+#'
+#' @examples
+#' \dontrun{
+#' link_inputs("config.yml")
+#' }
+#' 
+#' @export
+link_inputs <- function(cfg_path) {
+
+  cfg <- config::get(file = cfg_path)
+  gdrive_path <- cfg$gdrive_path
+  if (is.null(gdrive_path)) {
+    stop("Please provide the path to the google drive data space in the config file")
+  }
+  if (!dir.exists(gdrive_path)) {
+    stop(paste0("The provided gdrive_path does not exist: ", gdrive_path))
+  }
+
+  # this is what makes the pipeline portable across systems
+  local_data_dir <- here::here("data")
+  if (!dir.exists(local_data_dir)) {
+    dir.create(local_data_dir)
+  }
+  
+  message(paste0("Linking the google drive data space to the local Data directory: ", gdrive_path))
+  file.symlink(gdrive_path, local_data_dir)
+
+  if (dir.exists(file.path(local_data_dir, basename(gdrive_path)))) {
+    message("Linking successful!")
+  } else {
+    stop("Linking failed!")
+  }  
+
+  # return the full file tree of the linked data directory with full paths
+  files <- list.files(local_data_dir, recursive = TRUE, full.names = TRUE, include.dirs = TRUE)
+
+  files
+
+}
+```
+
+```{r examples-link_inputs}
+link_inputs(cfg_path = system.file("config.yml", package = "KiribatiBiomarkers"))
+```
+
+```{r tests-link_inputs}
+test_that("link_inputs works", {
+  expect_true(inherits(link_inputs, "function"))
+})
+```
+
+
+```{r development-inflate, eval=FALSE}
+# Run but keep eval=FALSE to avoid infinite loop
+# Execute in the console directly
+fusen::inflate(flat_file = "dev/flat_link_inputs.Rmd", vignette_name = "Raw Data Linking", check=FALSE, open_vignette=FALSE)
+```
+
