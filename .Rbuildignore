@@ -8,3 +8,6 @@
 ^data$
 ^sandbox$        # ignore only /sandbox/, not anything containing 'sandbox'
 ^\.vscode$       # ignore the .vscode folder specifically
+^CODE_OF_CONDUCT\.md$
+^KiribatiBiomarkers\.Rproj$
+^\.Rproj\.user$

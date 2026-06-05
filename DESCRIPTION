@@ -1,20 +1,36 @@
 Package: KiribatiBiomarkers
-Version: 0.0.0.9000
 Title: Kiribati Biomarkers Data Distribution Package
-Description: This package provides access to biomarker data collected in Kiribati.
-Authors@R: c(person(given = "Tinashe",
-         family = "Tapera",
-         role = c("aut", "cre"),
-         email = "ttapera@hsph.harvard.edu"),
-  person(given = "Jessica",
-         family = "Mason",
-         role = "com",
-         email = "jzm@hsph.harvard.edu"),
-  person(given = "Christopher",
-         family = "Golden",
-         role = "cph",
-         email = "golden@hsph.harvard.edu"))
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Tinashe", "Tapera", , "ttapera@hsph.harvard.edu", role = c("aut", "cre")),
+    person("Jessica", "Mason", , "jzm@hsph.harvard.edu", role = "com"),
+    person("Christopher", "Golden", , "golden@hsph.harvard.edu", role = "cph")
+  )
+Description: This package provides access to biomarker data collected in
+    Kiribati.
 License: MIT + file LICENSE
+Imports: 
+    cli,
+    config,
+    dplyr,
+    fs,
+    glue,
+    here,
+    knitr,
+    magrittr,
+    readr,
+    rmarkdown,
+    skimr,
+    stats,
+    stringr,
+    tarchetypes,
+    targets,
+    xfun
+Suggests: 
+    testthat
+VignetteBuilder: 
+    knitr
+Config/fusen/version: 0.7.2
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
