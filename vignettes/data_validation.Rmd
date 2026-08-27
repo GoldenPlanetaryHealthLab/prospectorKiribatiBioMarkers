@@ -192,7 +192,6 @@ due to the fact that each record is now unique (ie no repeated measures).
 ```{r}
 skimr::skim(slimmed_data)
 ```
-
 To make a small data set of age, sex and location (note that lat and long were largely missing data):
 
 ```{r}
@@ -215,6 +214,38 @@ small_data <- golden_biomarkers_data$kiribati_cleandata_mergedHIES.csv %>%
 
 ```{r}
 skimr::skim(small_data)
+```
+
+From [Re: (PI) Professor Majid Ezzati; (Provider) Harvard T.H Chan School of Public Health (Ref: 2025M-1106-1239) 2026-06-15 From golden@hsph.harvard.edu to ttapera@hsph.harvard.edu](https://hookmark.net/hm/hook/email/CAMq3760Bvo6%2B%3D8Q2-x3spwF8osexybNf7w99G1oSt%3DRG-OkTcg%40mail.gmail.com), we also need to add the village metadata.
+
+`uuid` from `slimmed_data` must be added to `small_data` joined on `community_name`, and then linked to the community name in
+the new village metadata. Actual village names must be masked.
+
+```{r}
+village_metadata <- here("data/inputs") %>%
+  list.files(full.names=T, pattern = "village_metadata", recursive=T) %>%
+  read_csv()
+```
+
+Do we have any joins?
+
+```{r}
+small_data %>%
+  left_join(village_metadata, join_by(community == village)) %>%
+  select(-uid) %>% #deID for summary tables
+  skim()
+```
+
+Many to many, which makes sense _if_ a single entry record of uuid (a person) may
+have multiple assigned locations that they collected data.
+Additionally, there are multiple entries of uid (`r length(unique(small_data$uid))`
+unique `uids`, vs `r nrow(small_data)` total rows). So many-to-many is
+understandable here.
+
+```{r}
+small_data <- small_data %>%
+  left_join(select(village_metadata, village, rururb), join_by(community == village)) %>%
+  mutate(community = as.factor(community), rururb = as.factor(rururb))
 ```
 
 Now we can use the `codebook` package to create a data dictionary for these datasets.
@@ -267,7 +298,8 @@ small_labels <- list(
   uid = "Unique Identifier (note that multiple measures per person have been removed to de-identify data)",
   age_in_months = "Age in Months at time of survey",
   gender = "Gender",
-  community = "Community of data collection"
+  community = "Community of data collection",
+  rururb = "Community Rural/Urban classification"
 )
 
 var_label(small_data) <- small_labels

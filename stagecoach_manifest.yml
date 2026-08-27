@@ -24,6 +24,9 @@ sources:
     - name: kiribati_biomarkers_gdrive
       path_regex: "/n/holylabs/LABS/cgolden_lab/Lab/data_freeze/golden_googledrive_rclone/Kiribati/4. Datasets/kiribati_biomarkers"
       required: true
+    - name: village_metadata_csv
+      path_regex: '/n/holylabs/LABS/cgolden_lab/Lab/frontier/gold_mine/01_ore/qualtrics_sync/datalad/qualtrics/2026-08-26/tirt420'
+      required: true
   02_globus:
     enabled: false
     source_endpoint: null
