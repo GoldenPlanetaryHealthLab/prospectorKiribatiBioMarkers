@@ -205,7 +205,9 @@ small_data <- golden_biomarkers_data$kiribati_cleandata_mergedHIES.csv %>%
   select( 
     uid = hhld_id_hm_basic__id,
     age_in_months, 
-    gender = L1_q3_gender,     community = L1_q125_which_community_are_you_in
+    gender = L1_q3_gender,
+    community = L1_q125_which_community_are_you_in,
+    island = L1_q124_which_island_are_we_on
   ) %>%
   mutate(uid = purrr::map_chr(uid, digest::digest)) %>%
   mutate(across(where(is.character), as.factor)) %>%
@@ -231,20 +233,25 @@ Do we have any joins?
 
 ```{r}
 small_data %>%
-  left_join(village_metadata, join_by(community == village)) %>%
+  left_join(village_metadata, join_by(community == village, island == island)) %>%
   select(-uid) %>% #deID for summary tables
   skim()
 ```
+
+<details>
+<summary>We had an old misjoin, but that's fixed now by adding `island`</summary>
 
 Many to many, which makes sense _if_ a single entry record of uuid (a person) may
 have multiple assigned locations that they collected data.
 Additionally, there are multiple entries of uid (`r length(unique(small_data$uid))`
 unique `uids`, vs `r nrow(small_data)` total rows). So many-to-many is
 understandable here.
+</details>
 
 ```{r}
 small_data <- small_data %>%
-  left_join(select(village_metadata, village, rururb), join_by(community == village)) %>%
+  left_join(select(village_metadata, village, rururb, island), join_by(community == village, island == island)) %>%
+  select(-island) %>% # TODO: should this be left in?
   mutate(community = as.factor(community), rururb = as.factor(rururb))
 ```
 
