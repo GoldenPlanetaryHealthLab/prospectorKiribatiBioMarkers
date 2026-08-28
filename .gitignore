@@ -286,3 +286,6 @@ __marimo__/
 logs/*
 *.out
 *.err
+/.uvr/library/
+/.uvr/activate*
+**/*labbook
