@@ -1,0 +1,188 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Kiribati Biomarkers Curation Manual",
+    "section": "",
+    "text": "This manual will guide preparation, curation, execution, and verification of the Kiribati biomarkers data-release pipeline.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Kiribati Biomarkers Curation Manual</span>"
+    ]
+  },
+  {
+    "objectID": "00_cover.html",
+    "href": "00_cover.html",
+    "title": "2  Manual Scope and Safety",
+    "section": "",
+    "text": "Stub for the manual scope, intended operators, data-access boundaries, and required approvals.",
+    "crumbs": [
+      "Project Setup",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Manual Scope and Safety</span>"
+    ]
+  },
+  {
+    "objectID": "01_misc-render-isolated.html",
+    "href": "01_misc-render-isolated.html",
+    "title": "3  Render In Isolation",
+    "section": "",
+    "text": "3.1 Profiles\nThe first page of our project establishes Quarto as our human-readable engineering surface. This makes use of our Quarto Manual workflow.\nQuarto has a notable limitation that we’re still investigating. The gist is that we can’t seem to have multiple renders running smoothly on the cluster, causing odd errors that are hard to debug.\nUse scripts/render-isolated when another Quarto render may be using this checkout. It stages a private copy of the repository on the node-local temporary filesystem, so each render owns its own notebooks/.quarto/_freeze directory and Quarto cache. Only a successful rendered site is copied back to the shared checkout.\nRun the generated wrapper from the repository root. Any arguments after the script name are forwarded to quarto render notebooks:\nQuarto profiles keep the three kinds of work in this project explicit: authoring is the default for reading, editing, and previewing the Manual; it renders the site without loading the file-emission extension. emit loads that extension and materializes the scripts and configuration described by the Manual. pipeline does everything emit does, then runs the input-provenance graph after a complete render.\nThey are separate because these operations have different side effects and review expectations. An ordinary authoring render should be safe to repeat without unexpectedly changing generated files or processing data. Emitting files is an intentional, reviewable synchronization from the Manual to its derived artifacts, while the pipeline profile makes data-processing execution an equally deliberate step.\nThe isolated wrapper promotes files recorded by Quarto-emit’s manifest after a successful render, so an emit render updates the Manual’s generated scripts and configuration in the checkout. It does not promote arbitrary staged state: in particular, data products created by the pipeline profile remain in the staging copy. Run that profile only when its pipeline effects are intentionally managed outside this wrapper.",
+    "crumbs": [
+      "Project Setup",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Render In Isolation</span>"
+    ]
+  },
+  {
+    "objectID": "01_misc-render-isolated.html#profiles",
+    "href": "01_misc-render-isolated.html#profiles",
+    "title": "3  Render In Isolation",
+    "section": "",
+    "text": "At the end of a project render, Quarto prunes its freeze directory. Two processes pruning the same notebooks/.quarto/_freeze tree can race: one sees entries that the other has already removed, which can surface as Directory not empty. The staged copy gives each render a separate tree, so the prune operation has no shared mutable directory to remove.\n\n\nMaterialize the script and check its syntax:\nquarto render notebooks --profile emit\nbash -n scripts/render-isolated\nConfirm that scripts/render-isolated begins with the generated-file provenance header. The manual page, rather than the generated script, is the source of truth.",
+    "crumbs": [
+      "Project Setup",
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Render In Isolation</span>"
+    ]
+  },
+  {
+    "objectID": "02_misc-project-contract.html",
+    "href": "02_misc-project-contract.html",
+    "title": "4  Project Contract",
+    "section": "",
+    "text": "This page defines the different components of the project and emits those necessary, focusing primarily on folder creation and assignment.\nThe project initially uses the Cookie Cutter Data Science layout, but hinges on Quarto Manuals’ /notebooks directory for its functionality.\n\n/containers houses all container artifacts; .sif files are ignored;\n/data uses 3 subfolders – inputs, interim, and outputs, where the first are staged using stagecoach, the interim is for ephemeral data that can be discarded, and outputs is used for data that ultimately gets versioned and shared;\n/docs houses the docs for the project, generated by quarto render notebooks\n/notebooks drives development of this manual\n/scripts drives execution of this manual, including container runtime helpers\n\n\nThere aren’t any specific checks necessary before running this procedure.\nYou just need to ensure that the root directory for this repo is writable.\n\n\nRun the following to materialize the necessary folder:\nmkdir -p containers data/inputs data/intermediates data/outputs docs notebooks scripts  \n\nA shell test block here would be useful:\n#TODO.",
+    "crumbs": [
+      "Project Setup",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Project Contract</span>"
+    ]
+  },
+  {
+    "objectID": "03_misc-data-governance.html",
+    "href": "03_misc-data-governance.html",
+    "title": "5  Data Governance",
+    "section": "",
+    "text": "This is a private health dataset. No data can be shared outside of authorized parties. This also means that any visualizations and tables must be strictly masked.\nAt present, this is enforced by project access on GitHub and by data access on FASRC. The project does originate from before TMT joined the team, so a lot of retroactive engineering is likely.",
+    "crumbs": [
+      "Project Setup",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Data Governance</span>"
+    ]
+  },
+  {
+    "objectID": "infrastructure/10_page-spack.html",
+    "href": "infrastructure/10_page-spack.html",
+    "title": "6  Bootstrap the Spack Builder",
+    "section": "",
+    "text": "The first container is a workshop, not the project runtime. It contains Rocky Linux 9 and a pinned Spack release, but no project packages. Quarto materializes this Manual; Singularity or Apptainer builds the small definition below into spack-builder.sif. The cluster’s Spack installation remains useful for inspection and troubleshooting, but is not allowed to resolve this project’s package graph.\nThis separates bootstrapping from project resolution. Later pages use this builder image to handle Spack work in Rocky 9; the final runtime image contains the resolved project view, not a mutable Spack installation.\nThe upstream Spack image supplies Spack under /opt/spack, but a Singularity image must declare its own runtime environment rather than relying on the Docker image entrypoint. The definition therefore adds /opt/spack/bin to PATH; spack --version is the first observable promise of this stage.\n\ncommand -v quarto\ncommand -v singularity\n\n\nBootstrap: docker\nFrom: spack/rockylinux9:1.2.0\n\n%environment\nexport SPACK_ROOT=/opt/spack\nexport PATH=/opt/spack/bin:${PATH}\n\n\nmkdir -p artifacts/containers\nsingularity build --fakeroot artifacts/containers/spack-builder.sif \\\n  containers/bootstrap/spack-builder.def\n\n\nquarto render notebooks --profile emit --no-execute\nsingularity exec artifacts/containers/spack-builder.sif spack --version\nsingularity exec artifacts/containers/spack-builder.sif cat /etc/os-release\nThe successful image and the two commands above are the promised evidence for this stage: the workshop exists, runs Rocky 9, and has Spack available, but it does not yet claim to contain R or any project dependency.",
+    "crumbs": [
+      "Infrastructure",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Bootstrap the Spack Builder</span>"
+    ]
+  },
+  {
+    "objectID": "infrastructure/11_page-jinja.html",
+    "href": "infrastructure/11_page-jinja.html",
+    "title": "7  Declare the Native Runtime",
+    "section": "",
+    "text": "This page adds the project components to the empty workshop. spack.yaml is the reviewable declaration; it is deliberately not concretized or installed here. The next page turns this declaration into a Singularity recipe and builds the runtime inside the pinned Rocky 9 workshop.\nThe runtime uses the x86_64_v3 CPU baseline rather than the Sapphire Rapids build host. This preserves the broadly useful AVX2/FMA baseline while excluding AVX-512/VNNI, and applies the policy to every dependency rather than as a package-specific compiler-flag workaround.\ntargets loads igraph, whose artifact requires libglpk.so.40 and libflexiblas.so.3. glpk and flexiblas are therefore direct Spack specifications: OpenBLAS does not satisfy FlexiBLAS’s distinct SONAME. R packages remain project-local and are declared after the runtime exists with uvr.\n\nspack:\n  specs:\n  - r@4.5.1\n  - libxml2\n  - icu4c\n  - libx11\n  - git\n  - curl\n  - openssl\n  - libgit2\n  - cmake\n  - gmake\n  - freetype\n  - libjpeg-turbo\n  - libpng\n  - libtiff\n  - libwebp\n  - fontconfig\n  - fribidi\n  - harfbuzz\n  - libuv\n  - glpk\n  - flexiblas\n  view: true\n  concretizer:\n    unify: true\n  packages:\n    all:\n      require:\n      - target=x86_64_v3\n  config:\n    template_dirs:\n    - $env/containers/templates\n    - $spack/share/spack/templates\n  container:\n    format: singularity\n    images:\n      os: rockylinux:9\n      spack: 1.2.0\n    template: KiribatiBioMarkers.def.j2\n    os_packages:\n      final:\n      - ca-certificates\n      - findutils\n      - gzip\n      - tar\n      - which\n      - gcc\n      - gcc-c++\n      - make\n\n\nquarto render notebooks --profile emit --no-execute\nrg -n 'r@4.5.1|glpk|flexiblas|target=x86_64_v3|rockylinux:9' spack.yaml",
+    "crumbs": [
+      "Infrastructure",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Declare the Native Runtime</span>"
+    ]
+  },
+  {
+    "objectID": "infrastructure/12_page-jinja-build.html",
+    "href": "infrastructure/12_page-jinja-build.html",
+    "title": "8  Customize and Build the Runtime",
+    "section": "",
+    "text": "This page has two explicit jobs. The Jinja template adds the small runtime contract that Spack’s standard Singularity recipe does not know about: the uvr executable and the environment variables that expose the Spack view. Then the commands below use the workshop from the Bootstrap page to render the final recipe and build the image.\nThis Manual uses singularity deliberately. Confirm that it is the container runtime available on the system before proceeding. If a site uses Apptainer, an operator should make that substitution consciously and use it consistently for recipe generation, image building, and later execution.\n\ncommand -v singularity\ntest -r artifacts/containers/spack-builder.sif\n\n\n{% extends \"container/singularity.def\" %}\n\n{% block build_stage %}\n{{ super() }}\n  set -euo pipefail\n  UVR_VERSION=0.4.6\n  curl --fail --location --show-error --output /tmp/uvr.tar.gz \\\n    \"https://github.com/nbafrank/uvr/releases/download/v${UVR_VERSION}/uvr-x86_64-unknown-linux-gnu.tar.gz\"\n  mkdir -p /opt/uvr/bin\n  tar -xzf /tmp/uvr.tar.gz -C /opt/uvr/bin\n  rm -f /tmp/uvr.tar.gz\n  /opt/uvr/bin/uvr --version | grep -Fx \"uvr ${UVR_VERSION}\"\n{% endblock %}\n\n{% block final_stage %}\n{{ super() }}\n%files from build\n  /opt/uvr /opt/uvr\n  /opt/spack-environment/spack.lock /opt/spack-environment/spack.lock\n%post\n  set -eu\n  ln -sf /opt/uvr/bin/uvr /usr/local/bin/uvr\n  cat &gt;&gt; \"$SINGULARITY_ENVIRONMENT\" &lt;&lt;'EOF'\nunset R_HOME\nexport SPACK_VIEW=/opt/views/view\nexport PATH=\"/usr/local/bin:/opt/views/view/bin:${PATH}\"\nexport PKG_CONFIG_PATH=\"/opt/views/view/lib/pkgconfig:/opt/views/view/lib64/pkgconfig:/opt/views/view/share/pkgconfig:${PKG_CONFIG_PATH:-}\"\nexport CPATH=\"/opt/views/view/include:${CPATH:-}\"\nexport LIBRARY_PATH=\"/opt/views/view/lib:/opt/views/view/lib64:${LIBRARY_PATH:-}\"\nexport LD_LIBRARY_PATH=\"/opt/views/view/lib:/opt/views/view/lib64:${LD_LIBRARY_PATH:-}\"\nexport UVR_LIBRARY=/work/.uvr/library\nexport UVR_CACHE_DIR=/work/.uvr/cache\nexport R_LIBS_USER=/work/.uvr/library\nexport R_LIBS=/work/.uvr/library\nEOF\n%test\n  set -eu\n  command -v R\n  command -v Rscript\n  command -v uvr\n  R --version\n  uvr --version\n  test -r /opt/spack-environment/spack.lock\n  test ! -e /opt/spack/bin/spack\n{% endblock %}\n\n\nRun this one command from the repository root inside your usual salloc work block; no sbatch file is required. It first asks the workshop to render the recipe, then builds that recipe; the second operation concretizes and installs the graph inside its pinned Rocky 9 build stage.\nAt the end of a work block, submit the same operation as a one-off, non-interactive job—without creating an sbatch file—by using sbatch --wrap. This does not replace the usual salloc workflow; it is only a way to leave this long-running build with Slurm.\nsbatch -p hsph -t 04:00:00 --mem=8G --cpus-per-task=2 -J \"$(basename \"$PWD\")-build\" --chdir=\"$PWD\" --wrap=\"mkdir -p containers/build artifacts/containers && singularity exec --cleanenv --bind '$PWD:/work' artifacts/containers/spack-builder.sif /bin/bash -lc 'cd /work && spack -e . containerize &gt; containers/build/kiribati-biomarkers.def' && singularity build --fakeroot artifacts/containers/kiribati-biomarkers.sif containers/build/kiribati-biomarkers.def\"\nmkdir -p containers/build artifacts/containers && singularity exec --cleanenv --bind \"$PWD:/work\" artifacts/containers/spack-builder.sif /bin/bash -lc 'cd /work && spack -e . containerize &gt; containers/build/kiribati-biomarkers.def' && singularity build --fakeroot artifacts/containers/kiribati-biomarkers.sif containers/build/kiribati-biomarkers.def\n\n\nsingularity exec artifacts/containers/kiribati-biomarkers.sif R --version\nsingularity exec artifacts/containers/kiribati-biomarkers.sif uvr --version\nsingularity exec artifacts/containers/kiribati-biomarkers.sif test -r /opt/spack-environment/spack.lock\nsingularity exec artifacts/containers/kiribati-biomarkers.sif test ! -e /opt/spack/bin/spack",
+    "crumbs": [
+      "Infrastructure",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Customize and Build the Runtime</span>"
+    ]
+  },
+  {
+    "objectID": "infrastructure/12_page-uvr.html",
+    "href": "infrastructure/12_page-uvr.html",
+    "title": "9  Lock and Synchronize R Packages",
+    "section": "",
+    "text": "uvr.toml declares direct R package requirements and uvr.lock records their resolved versions. Neither belongs in the SIF: the SIF provides the stable R ABI; .uvr/library is project state, is ignored by Git, and is recreated with uvr sync --frozen from the committed lockfile.\nThis declaration is migrated from the existing rproject.toml direct dependencies. The vscode-R source was previously pinned because its sess package resides in a repository subdirectory; we are trying to knock this out without the high demands of vscode, so we’re commenting it out for now. #TODO should we remove it entirely?\n\n[project]\nname = \"KiribatiBiomarkers\"\nr_version = \"4.5.1\"\n\n[dependencies]\nR6 = \"*\"\nAsioHeaders = \"*\"\naskpass = \"*\"\nbase64url = \"*\"\nbit = \"*\"\nbrew = \"*\"\nbrio = \"*\"\ncachem = \"*\"\ncodebook = \"*\"\ncommonmark = \"*\"\nconfig = \"*\"\ncrayon = \"*\"\ncredentials = \"*\"\ndesc = \"*\"\ndiffobj = \"*\"\ndigest = \"*\"\ndplyr = \"*\"\nevaluate = \"*\"\nfastmap = \"*\"\nfontawesome = \"*\"\nfusen = \"*\"\ngenerics = \"*\"\ngitcreds = \"*\"\nhere = \"*\"\nhms = \"*\"\nhtmltools = \"*\"\nhtmlwidgets = \"*\"\nini = \"*\"\njquerylib = \"*\"\njsonlite = \"*\"\nlabelled = \"*\"\nlightparser = \"*\"\nlubridate = \"*\"\nmemoise = \"*\"\nmime = \"*\"\nminiUI = \"*\"\nparsermd = \"*\"\npillar = \"*\"\npkgbuild = \"*\"\npkgconfig = \"*\"\npkgdown = \"*\"\npraise = \"*\"\nprettyunits = \"*\"\nprofvis = \"*\"\nprogress = \"*\"\nrcmdcheck = \"*\"\nreadr = \"*\"\nremotes = \"*\"\nrepr = \"*\"\nrprojroot = \"*\"\nsass = \"*\"\nskimr = \"*\"\nstringi = \"*\"\nstringr = \"*\"\nsvglite = \"*\"\nsys = \"*\"\ntarchetypes = \"*\"\ntargets = \"*\"\ntibble = \"*\"\ntidyselect = \"*\"\ntzdb = \"*\"\nurlchecker = \"*\"\nusethis = \"*\"\nutf8 = \"*\"\nwaldo = \"*\"\nwebsocket = \"*\"\nwhisker = \"*\"\nwithr = \"*\"\nxopen = \"*\"\nyaml = \"*\"\nzip = \"*\"\n\n#[dependencies.vscode-R]\n#git = \"REditorSupport/vscode-R\"\n#rev = \"master#subdirectory=sess\"\n\n#[dev-dependencies]\n\n\nlocal({\n  uvr_library &lt;- Sys.getenv(\"UVR_LIBRARY\", file.path(getwd(), \".uvr\", \"library\"))\n  uvr_library &lt;- normalizePath(uvr_library, mustWork = FALSE)\n  if (dir.exists(uvr_library)) {\n    .libPaths(unique(c(uvr_library, .libPaths())))\n  }\n  Sys.setenv(R_LIBS_USER = uvr_library, R_LIBS = uvr_library)\n})\n\n\nscripts/kiribati-biomarkers uvr lock\nscripts/kiribati-biomarkers uvr sync\nscripts/kiribati-biomarkers uvr sync --frozen\nGenerate uvr.lock through the runner, review and commit it, then use uvr sync --frozen for repeatable installations. This keeps lock resolution and any source compilation aligned with the image’s Spack R ABI and compiler.\n\n\nquarto render notebooks --profile emit --no-execute\ntest -f uvr.toml\nrg -n '^r_version = \"4.5.1\"|^targets =|^\\[dependencies\\.vscode-R\\]' uvr.toml\ntest -f uvr.lock\nscripts/kiribati-biomarkers uvr sync --frozen",
+    "crumbs": [
+      "Infrastructure",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Lock and Synchronize R Packages</span>"
+    ]
+  },
+  {
+    "objectID": "infrastructure/13_page-runner.html",
+    "href": "infrastructure/13_page-runner.html",
+    "title": "10  Run the Project Environment",
+    "section": "",
+    "text": "The runner is the only place that chooses a container implementation, selects the image, sets a clean host environment, and binds writable project state. The image’s %environment activates Spack R and the project-local uvr library. Slurm invokes this runner rather than reproducing mount decisions.\n\n#!/usr/bin/env bash\nset -euo pipefail\n\nproject_dir=$(CDPATH= cd -- \"$(dirname -- \"${BASH_SOURCE[0]}\")/..\" && pwd)\nlocal_env=\"${project_dir}/containers/runtime/local.env\"\nif [[ -f \"${local_env}\" ]]; then\n  set -a\n  source \"${local_env}\"\n  set +a\nfi\n\nruntime=${CONTAINER_RUNTIME:-apptainer}\nif ! command -v \"${runtime}\" &gt;/dev/null 2&gt;&1; then\n  runtime=singularity\nfi\ncommand -v \"${runtime}\" &gt;/dev/null 2&gt;&1 || { echo \"Neither apptainer nor singularity is available.\" &gt;&2; exit 127; }\n\nimage=${KIRIBATI_BIOMARKERS_IMAGE:-\"${project_dir}/artifacts/containers/kiribati-biomarkers.sif\"}\ntest -r \"${image}\" || {\n  echo \"Container image not readable: ${image}\" &gt;&2\n  echo \"Build it with the Customize and Build the Runtime procedure or set KIRIBATI_BIOMARKERS_IMAGE.\" &gt;&2\n  exit 1\n}\n\nmkdir -p \"${project_dir}/.container-home\" \"${project_dir}/.container-tmp\" \"${project_dir}/.uvr/library\" \"${project_dir}/.uvr/cache\"\nif (( $# == 0 )); then\n  set -- /bin/bash -i\nfi\n\nexec \"${runtime}\" exec --cleanenv \\\n  --bind \"${project_dir}:/work\" \\\n  --bind \"${project_dir}/.container-tmp:/tmp\" \\\n  --home \"${project_dir}/.container-home:/home/rse\" \\\n  \"${image}\" \\\n  /bin/bash -lc 'set -e; cd /work; exec \"$@\"' \\\n  kiribati-biomarkers \"$@\"\n\n\n# Copy to containers/runtime/local.env; this file is intentionally untracked.\n# KIRIBATI_BIOMARKERS_IMAGE=/absolute/path/kiribati-biomarkers.sif\n# CONTAINER_RUNTIME=apptainer\n\n\n#!/usr/bin/env bash\n#SBATCH --job-name=kiribati-biomarkers\n#SBATCH --partition=hsph\n#SBATCH --cpus-per-task=4\n#SBATCH --mem=24G\n#SBATCH --time=04:00:00\n#SBATCH --output=/n/holylabs/LABS/cgolden_lab/Lab/frontier/works/prospectors/prospectorKiribatiBioMarkers/slurm/launch/logs/launch-%j.out\n#SBATCH --error=/n/holylabs/LABS/cgolden_lab/Lab/frontier/works/prospectors/prospectorKiribatiBioMarkers/slurm/launch/logs/launch-%j.err\n\nset -euo pipefail\n\nPROJECT_DIR=/n/holylabs/LABS/cgolden_lab/Lab/frontier/works/prospectors/prospectorKiribatiBioMarkers\nmkdir -p \"${PROJECT_DIR}/slurm/launch/logs\"\ncd \"${PROJECT_DIR}\"\nmodule purge\nexec \"${PROJECT_DIR}/scripts/kiribati-biomarkers\" \"$@\"\n\n\nquarto render notebooks --profile emit --no-execute\nbash -n scripts/kiribati-biomarkers slurm/launch/launch_container.sbatch\nscripts/kiribati-biomarkers true || test $? -eq 1",
+    "crumbs": [
+      "Infrastructure",
+      "<span class='chapter-number'>10</span>  <span class='chapter-title'>Run the Project Environment</span>"
+    ]
+  },
+  {
+    "objectID": "pipeline/14_page-stage-inputs.html",
+    "href": "pipeline/14_page-stage-inputs.html",
+    "title": "11  Stage Inputs",
+    "section": "",
+    "text": "Before running the input-provenance pipeline, stage the source materials at the repository input boundary. The pipeline has exactly two prerequisites:\n\nstagecoach_manifest.yml at the repository root; and\nthe staged file inventory under data/inputs/.\n\nThe manifest records the staging context, while data/inputs/ contains the files that are actually available to this project.\n\nAs always, we use stagecoach to create a modular method for loading and unloading input data at will. Ensure you have stagecoach installed — typically as a tool — with uv.\n# uv tool install git+https://github.com/GoldenPlanetaryHealthLab/stagecoach.git\n\nuv tool list\n\n\nstagecoach can walk you through the actual steps, involving 1. hail, which drops a manifest in the root directory,\n\ninspect, which helps ensure your modifications are valid and your data access is appropriate,\nstage, which runs the necessary functionality to bring your data into the workspace.\n\n\nFor this project, out input data is part of the Google Drive Rclone tree.\n\ndata_dir=data/inputs\n\nif [ \"$(ls -A $data_dir)\" ]; then\n  echo \"$data_dir is not empty.\" ✅\nelse\n  echo \"$data_dir is empty\" ❌\nfi\n\n[ -f stagecoach_manifest.yml ] && echo \"Manifest exists\" || echo \"Manifest not found\"",
+    "crumbs": [
+      "Pipeline",
+      "<span class='chapter-number'>11</span>  <span class='chapter-title'>Stage Inputs</span>"
+    ]
+  },
+  {
+    "objectID": "pipeline/15_page-inspect-source-data.html",
+    "href": "pipeline/15_page-inspect-source-data.html",
+    "title": "12  Inspect Source Data",
+    "section": "",
+    "text": "Stub for source-data inventory and validation procedures.",
+    "crumbs": [
+      "Pipeline",
+      "<span class='chapter-number'>12</span>  <span class='chapter-title'>Inspect Source Data</span>"
+    ]
+  },
+  {
+    "objectID": "pipeline/16_page-targets-curation.html",
+    "href": "pipeline/16_page-targets-curation.html",
+    "title": "13  Curate Release",
+    "section": "",
+    "text": "13.1 Curation rules migrated from the legacy vignette\nThis page is the source of truth for the Kiribati biomarker release curation graph. It migrates the substantive transformation from the retired TO_DELETE/vignettes/data_validation.Rmd into a reproducible targets pipeline. The source data remain under data/inputs/; only curated release artifacts are written to data/outputs/curated/.\nThe release retains biomarker values, age in months, age group, gender, and clinical status variables. It derives age in months from the interview date and date of birth, removes records whose derived age is not positive, and replaces the source identifier with its MD5 digest. The small release retains the location-derived village_id and rururb classification, but not literal community or island names.\nThe latter closes a discrepancy in the legacy vignette: it stated that actual village names must be masked, but its final small_data object still included them. village_id must therefore be supplied by the approved metadata input; the pipeline does not create a reversible location key.\nThe generated curation module is incorporated into the generated targets graph on the Execute Pipeline page. Render with the pipeline profile only after reviewing the staged inputs and the resulting audit table.",
+    "crumbs": [
+      "Pipeline",
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Curate Release</span>"
+    ]
+  },
+  {
+    "objectID": "pipeline/16_page-targets-curation.html#curation-rules-migrated-from-the-legacy-vignette",
+    "href": "pipeline/16_page-targets-curation.html#curation-rules-migrated-from-the-legacy-vignette",
+    "title": "13  Curate Release",
+    "section": "",
+    "text": "# Dependencies are namespace-qualified so this module can be sourced by the\n# generated pipeline without creating another package-level source of truth.\n\ncuration_required_columns &lt;- c(\n  \"DOB_HIES\", \"date_of_interview\", \"hhld_id_hm_basic__id\", \"L1_q61_hdl\",\n  \"ldl_corrected\", \"tc_corrected\", \"pulse_corrected\", \"glucose_corrected\",\n  \"triglycerides_corrected\", \"systolic_corrected\", \"diastolic_corrected\",\n  \"temperature_correctedF\", \"hemoglobin_corrected\", \"hematocrit_corrected\",\n  \"diabetes_corrected\", \"age_group\", \"fever\", \"BloodPressure_status\",\n  \"Glucose_status\", \"anemia_status\", \"cholesterol_status\",\n  \"triglycerides_status\", \"diabetes_status\", \"gender_HIES\", \"L1_q3_gender\",\n  \"L1_q125_which_community_are_you_in\", \"L1_q124_which_island_are_we_on\"\n)\n\ncuration_input_paths &lt;- function(raw_inputs) {\n  biomarker_paths &lt;- raw_inputs[\n    grepl(\"Goldenetal_KI_biomarkers\", raw_inputs) &\n      basename(raw_inputs) == \"kiribati_cleandata_mergedHIES.csv\"\n  ]\n  village_paths &lt;- raw_inputs[\n    grepl(\"village_metadata\", basename(raw_inputs), ignore.case = TRUE) &\n      grepl(\"\\\\.csv$\", raw_inputs, ignore.case = TRUE)\n  ]\n\n  if (length(biomarker_paths) != 1L) {\n    stop(\n      \"Expected exactly one Golden et al. biomarker export; found \",\n      length(biomarker_paths), \". Refine the staged input inventory.\"\n    )\n  }\n  if (length(village_paths) != 1L) {\n    stop(\n      \"Expected exactly one village_metadata CSV; found \",\n      length(village_paths), \". Refine the staged input inventory.\"\n    )\n  }\n\n  c(biomarkers = biomarker_paths, village_metadata = village_paths)\n}\n\nassert_required_columns &lt;- function(data, required, dataset_name) {\n  missing &lt;- setdiff(required, names(data))\n  if (length(missing)) {\n    stop(\n      dataset_name, \" is missing required columns: \",\n      paste(missing, collapse = \", \")\n    )\n  }\n  invisible(data)\n}\n\nadd_age_in_months &lt;- function(data) {\n  assert_required_columns(\n    data,\n    c(\"DOB_HIES\", \"date_of_interview\"),\n    \"Biomarker export\"\n  )\n\n  data |&gt;\n    dplyr::mutate(\n      dob = as.Date(.data[[\"DOB_HIES\"]], format = \"%d/%m/%Y\"),\n      interview_date = as.Date(\n        .data[[\"date_of_interview\"]],\n        format = \"%d/%m/%Y\"\n      ),\n      age_in_months = lubridate::interval(dob, interview_date) /\n        lubridate::months(1)\n    )\n}\n\ncuration_audit &lt;- function(data_with_age) {\n  tibble::tibble(\n    metric = c(\"source_rows\", \"missing_dates\", \"nonpositive_age_rows\"),\n    value = c(\n      nrow(data_with_age),\n      sum(is.na(data_with_age$dob) | is.na(data_with_age$interview_date)),\n      sum(is.na(data_with_age$age_in_months) | data_with_age$age_in_months &lt;= 0)\n    )\n  )\n}\n\nhash_identifier &lt;- function(identifier) {\n  vapply(as.character(identifier), digest::digest, character(1))\n}\n\ncurate_slimmed_data &lt;- function(data_with_age) {\n  assert_required_columns(data_with_age, curation_required_columns, \"Biomarker export\")\n\n  data_with_age |&gt;\n    dplyr::filter(!is.na(age_in_months), age_in_months &gt; 0) |&gt;\n    dplyr::transmute(\n      uid = hash_identifier(.data[[\"hhld_id_hm_basic__id\"]]),\n      hdl = .data[[\"L1_q61_hdl\"]], ldl = .data[[\"ldl_corrected\"]],\n      tc = .data[[\"tc_corrected\"]], pulse = .data[[\"pulse_corrected\"]],\n      glucose = .data[[\"glucose_corrected\"]],\n      triglycerides = .data[[\"triglycerides_corrected\"]],\n      systolic = .data[[\"systolic_corrected\"]],\n      diastolic = .data[[\"diastolic_corrected\"]],\n      temperature = .data[[\"temperature_correctedF\"]],\n      hemoglobin = .data[[\"hemoglobin_corrected\"]],\n      hematocrit = .data[[\"hematocrit_corrected\"]],\n      diabetes = .data[[\"diabetes_corrected\"]], age_group = .data[[\"age_group\"]],\n      fever = .data[[\"fever\"]],\n      BloodPressure_status = .data[[\"BloodPressure_status\"]],\n      Glucose_status = .data[[\"Glucose_status\"]],\n      anemia_status = .data[[\"anemia_status\"]],\n      cholesterol_status = .data[[\"cholesterol_status\"]],\n      triglycerides_status = .data[[\"triglycerides_status\"]],\n      diabetes_status = .data[[\"diabetes_status\"]],\n      gender = .data[[\"gender_HIES\"]], age_in_months\n    ) |&gt;\n    dplyr::mutate(\n      dplyr::across(where(is.character), as.factor),\n      uid = as.character(uid)\n    )\n}\n\ncurate_small_data &lt;- function(data_with_age, village_metadata) {\n  assert_required_columns(\n    village_metadata,\n    c(\"village\", \"island\", \"village_id\", \"rururb\"),\n    \"Village metadata\"\n  )\n\n  data_with_age |&gt;\n    dplyr::filter(!is.na(age_in_months), age_in_months &gt; 0) |&gt;\n    dplyr::transmute(\n      uid = hash_identifier(.data[[\"hhld_id_hm_basic__id\"]]), age_in_months,\n      gender = .data[[\"L1_q3_gender\"]],\n      community = .data[[\"L1_q125_which_community_are_you_in\"]],\n      island = .data[[\"L1_q124_which_island_are_we_on\"]]\n    ) |&gt;\n    dplyr::left_join(\n      dplyr::select(village_metadata, village, island, village_id, rururb),\n      by = c(\"community\" = \"village\", \"island\" = \"island\")\n    ) |&gt;\n    dplyr::select(uid, age_in_months, gender, village_id, rururb) |&gt;\n    dplyr::mutate(\n      dplyr::across(where(is.character), as.factor),\n      uid = as.character(uid)\n    )\n}\n\nslimmed_labels &lt;- c(\n  uid = \"De-identified record identifier\", hdl = \"HDL cholesterol\",\n  ldl = \"LDL cholesterol\", tc = \"Total cholesterol\", pulse = \"Pulse\",\n  glucose = \"Glucose\", triglycerides = \"Triglycerides\",\n  systolic = \"Systolic blood pressure\", diastolic = \"Diastolic blood pressure\",\n  temperature = \"Temperature in Fahrenheit\", hemoglobin = \"Hemoglobin level\",\n  hematocrit = \"Percentage of red blood cells\", diabetes = \"HbA1c level\",\n  age_group = \"Age group\", fever = \"Fever recorded\",\n  BloodPressure_status = \"Blood pressure status\", Glucose_status = \"Glucose status\",\n  anemia_status = \"Anemia status\", cholesterol_status = \"Cholesterol status\",\n  triglycerides_status = \"Triglycerides status\", diabetes_status = \"Diabetes status\",\n  gender = \"Gender\", age_in_months = \"Age in months at interview\"\n)\n\nsmall_labels &lt;- c(\n  uid = \"De-identified record identifier\",\n  age_in_months = \"Age in months at interview\", gender = \"Gender\",\n  village_id = \"Approved non-identifying village key\",\n  rururb = \"Village rural/urban classification\"\n)\n\nwrite_release_csv &lt;- function(data, path) {\n  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)\n  readr::write_csv(data, path)\n  path\n}\n\nwrite_data_dictionary &lt;- function(data, labels, path) {\n  labelled::var_label(data) &lt;- as.list(labels[names(data)])\n  dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)\n  readr::write_csv(codebook::codebook_table(data), path)\n  path\n}\n\ncuration_targets &lt;- function() {\n  output_dir &lt;- file.path(\"data\", \"outputs\", \"curated\")\n\n  list(\n    targets::tar_target(\n      curation_inputs, curation_input_paths(raw_inputs), format = \"file\"\n    ),\n    targets::tar_target(\n      curation_source,\n      readr::read_csv(curation_inputs[[\"biomarkers\"]], show_col_types = FALSE)\n    ),\n    targets::tar_target(\n      village_metadata,\n      readr::read_csv(curation_inputs[[\"village_metadata\"]], show_col_types = FALSE)\n    ),\n    targets::tar_target(curation_source_with_age, add_age_in_months(curation_source)),\n    targets::tar_target(curation_audit_table, curation_audit(curation_source_with_age)),\n    targets::tar_target(slimmed_data, curate_slimmed_data(curation_source_with_age)),\n    targets::tar_target(\n      small_data, curate_small_data(curation_source_with_age, village_metadata)\n    ),\n    targets::tar_target(\n      slimmed_data_csv,\n      write_release_csv(slimmed_data, file.path(output_dir, \"slimmed_data.csv\")),\n      format = \"file\"\n    ),\n    targets::tar_target(\n      small_data_csv,\n      write_release_csv(small_data, file.path(output_dir, \"small_data.csv\")),\n      format = \"file\"\n    ),\n    targets::tar_target(\n      slimmed_data_dictionary_csv,\n      write_data_dictionary(\n        slimmed_data, slimmed_labels,\n        file.path(output_dir, \"data_dictionary_slimmed_data.csv\")\n      ),\n      format = \"file\"\n    ),\n    targets::tar_target(\n      small_data_dictionary_csv,\n      write_data_dictionary(\n        small_data, small_labels,\n        file.path(output_dir, \"data_dictionary_small_data.csv\")\n      ),\n      format = \"file\"\n    ),\n    targets::tar_target(\n      curation_audit_csv,\n      write_release_csv(\n        curation_audit_table, file.path(output_dir, \"curation_audit.csv\")\n      ),\n      format = \"file\"\n    )\n  )\n}",
+    "crumbs": [
+      "Pipeline",
+      "<span class='chapter-number'>13</span>  <span class='chapter-title'>Curate Release</span>"
+    ]
+  },
+  {
+    "objectID": "pipeline/17_page-execute-pipeline.html",
+    "href": "pipeline/17_page-execute-pipeline.html",
+    "title": "14  Execute Pipeline",
+    "section": "",
+    "text": "This page is the source of truth for the input-provenance and curation graph. Render the Manual with the emit profile to materialize the scripts, or with the pipeline profile to materialize them and run the graph after a complete Manual render.\n\nConfirm that stagecoach_manifest.yml exists at the repository root and that data/inputs/ contains the staged input files required by the Curation page.\n\n\nlibrary(targets)\nlibrary(here)\n\nsource(\"pipeline/curate_biomarkers.R\")\n\nbase_targets &lt;- list(\n  tar_target(\n    stagecoach_manifest,\n    here::here(\"stagecoach_manifest.yml\"),\n    format = \"file\"\n  ),\n  tar_target(\n    raw_inputs,\n    {\n      input_dir &lt;- here::here(\"data\", \"inputs\")\n      if (!dir.exists(input_dir)) {\n        stop(\"Staged input directory is missing: \", input_dir)\n      }\n\n      inputs &lt;- list.files(\n        input_dir,\n        recursive = TRUE,\n        full.names = TRUE,\n        include.dirs = FALSE,\n        no.. = TRUE\n      )\n      if (!length(inputs)) {\n        stop(\"No staged input files are available in: \", input_dir)\n      }\n\n      inputs\n    },\n    format = \"file\"\n  )\n)\n\nc(base_targets, curation_targets())\n\nThe generated pipeline/_targets.R is not hand-edited. To run it, use:\nquarto render notebooks --profile pipeline",
+    "crumbs": [
+      "Pipeline",
+      "<span class='chapter-number'>14</span>  <span class='chapter-title'>Execute Pipeline</span>"
+    ]
+  },
+  {
+    "objectID": "pipeline/18_page-verify-release.html",
+    "href": "pipeline/18_page-verify-release.html",
+    "title": "15  Verify Release",
+    "section": "",
+    "text": "Stub for release validation, provenance checks, and operator sign-off.",
+    "crumbs": [
+      "Pipeline",
+      "<span class='chapter-number'>15</span>  <span class='chapter-title'>Verify Release</span>"
+    ]
+  }
+]

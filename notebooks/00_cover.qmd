@@ -1,0 +1,8 @@
+---
+title: "Manual Scope and Safety"
+execute:
+  eval: false
+---
+
+Stub for the manual scope, intended operators, data-access boundaries, and
+required approvals.

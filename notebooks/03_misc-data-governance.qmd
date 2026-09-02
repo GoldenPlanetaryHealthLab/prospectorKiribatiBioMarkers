@@ -1,0 +1,12 @@
+---
+title: "Data Governance"
+execute:
+  eval: false
+---
+
+This is a private health dataset. No data can be shared outside of authorized parties.
+This also means that any visualizations and tables must be strictly masked.
+
+At present, this is enforced by project access on GitHub and by
+data access on FASRC. The project does originate from before TMT
+joined the team, so a lot of retroactive engineering is likely.

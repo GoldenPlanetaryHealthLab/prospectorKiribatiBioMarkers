@@ -1,0 +1,7 @@
+emit:
+  project_root: ..
+
+format:
+  GoldenPlanetaryHealthLab/quarto-manual-html:
+    filters:
+      - _extensions/GoldenPlanetaryHealthLab/quarto-emit/quarto-emit.lua

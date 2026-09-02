@@ -1,0 +1,67 @@
+---
+title: "Execute Pipeline"
+execute:
+  eval: false
+---
+
+This page is the source of truth for the input-provenance and curation graph.
+Render the Manual with the `emit` profile to materialize the scripts, or with
+the `pipeline` profile to materialize them and run the graph after a complete
+Manual render.
+
+::: {.manual-prereq title="Confirm The Input Boundary"}
+
+Confirm that `stagecoach_manifest.yml` exists at the repository root and that
+`data/inputs/` contains the staged input files required by the Curation page.
+
+:::
+
+::: {.manual-procedure .emit-source-r file="{{ emit.project_root }}/pipeline/_targets.R" title="Materialize The Input-Provenance Graph"}
+
+```r
+library(targets)
+library(here)
+
+source("pipeline/curate_biomarkers.R")
+
+base_targets <- list(
+  tar_target(
+    stagecoach_manifest,
+    here::here("stagecoach_manifest.yml"),
+    format = "file"
+  ),
+  tar_target(
+    raw_inputs,
+    {
+      input_dir <- here::here("data", "inputs")
+      if (!dir.exists(input_dir)) {
+        stop("Staged input directory is missing: ", input_dir)
+      }
+
+      inputs <- list.files(
+        input_dir,
+        recursive = TRUE,
+        full.names = TRUE,
+        include.dirs = FALSE,
+        no.. = TRUE
+      )
+      if (!length(inputs)) {
+        stop("No staged input files are available in: ", input_dir)
+      }
+
+      inputs
+    },
+    format = "file"
+  )
+)
+
+c(base_targets, curation_targets())
+```
+
+:::
+
+The generated `pipeline/_targets.R` is not hand-edited. To run it, use:
+
+```sh
+quarto render notebooks --profile pipeline
+```

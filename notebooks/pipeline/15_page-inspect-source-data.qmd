@@ -1,0 +1,7 @@
+---
+title: "Inspect Source Data"
+execute:
+  eval: false
+---
+
+Stub for source-data inventory and validation procedures.

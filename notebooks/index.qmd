@@ -1,0 +1,8 @@
+---
+title: "Kiribati Biomarkers Curation Manual"
+execute:
+  eval: false
+---
+
+This manual will guide preparation, curation, execution, and verification of
+the Kiribati biomarkers data-release pipeline.

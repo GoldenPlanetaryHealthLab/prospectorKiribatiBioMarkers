@@ -1,0 +1,111 @@
+---
+title: "Customize and Build the Runtime"
+subtitle: "Use the Rocky 9 workshop to generate and build the final image"
+execute:
+  eval: false
+---
+
+This page has two explicit jobs. The Jinja template adds the small runtime
+contract that Spack's standard Singularity recipe does not know about: the
+`uvr` executable and the environment variables that expose the Spack view.
+Then the commands below use the workshop from the Bootstrap page to render the
+final recipe and build the image.
+
+This Manual uses `singularity` deliberately. Confirm that it is the container
+runtime available on the system before proceeding. If a site uses Apptainer,
+an operator should make that substitution consciously and use it consistently
+for recipe generation, image building, and later execution.
+
+::: {.manual-prereq title="Confirm the workshop and container runtime"}
+
+```sh
+command -v singularity
+test -r artifacts/containers/spack-builder.sif
+```
+
+:::
+
+::: {.manual-procedure .emit-generic file="{{ emit.project_root }}/containers/templates/KiribatiBioMarkers.def.j2" title="Emit the final-image extension"}
+
+```jinja
+{% extends "container/singularity.def" %}
+
+{% block build_stage %}
+{{ super() }}
+  set -euo pipefail
+  UVR_VERSION=0.4.6
+  curl --fail --location --show-error --output /tmp/uvr.tar.gz \
+    "https://github.com/nbafrank/uvr/releases/download/v${UVR_VERSION}/uvr-x86_64-unknown-linux-gnu.tar.gz"
+  mkdir -p /opt/uvr/bin
+  tar -xzf /tmp/uvr.tar.gz -C /opt/uvr/bin
+  rm -f /tmp/uvr.tar.gz
+  /opt/uvr/bin/uvr --version | grep -Fx "uvr ${UVR_VERSION}"
+{% endblock %}
+
+{% block final_stage %}
+{{ super() }}
+%files from build
+  /opt/uvr /opt/uvr
+  /opt/spack-environment/spack.lock /opt/spack-environment/spack.lock
+%post
+  set -eu
+  ln -sf /opt/uvr/bin/uvr /usr/local/bin/uvr
+  cat >> "$SINGULARITY_ENVIRONMENT" <<'EOF'
+unset R_HOME
+export SPACK_VIEW=/opt/views/view
+export PATH="/usr/local/bin:/opt/views/view/bin:${PATH}"
+export PKG_CONFIG_PATH="/opt/views/view/lib/pkgconfig:/opt/views/view/lib64/pkgconfig:/opt/views/view/share/pkgconfig:${PKG_CONFIG_PATH:-}"
+export CPATH="/opt/views/view/include:${CPATH:-}"
+export LIBRARY_PATH="/opt/views/view/lib:/opt/views/view/lib64:${LIBRARY_PATH:-}"
+export LD_LIBRARY_PATH="/opt/views/view/lib:/opt/views/view/lib64:${LD_LIBRARY_PATH:-}"
+export UVR_LIBRARY=/work/.uvr/library
+export UVR_CACHE_DIR=/work/.uvr/cache
+export R_LIBS_USER=/work/.uvr/library
+export R_LIBS=/work/.uvr/library
+EOF
+%test
+  set -eu
+  command -v R
+  command -v Rscript
+  command -v uvr
+  R --version
+  uvr --version
+  test -r /opt/spack-environment/spack.lock
+  test ! -e /opt/spack/bin/spack
+{% endblock %}
+```
+
+:::
+
+::: {.manual-procedure title="Generate and build the runtime"}
+
+Run this one command from the repository root inside your usual `salloc` work
+block; no sbatch file is required. It first asks the workshop to render the
+recipe, then builds that recipe; the second operation concretizes and installs
+the graph inside its pinned Rocky 9 build stage.
+
+At the end of a work block, submit the same operation as a one-off,
+non-interactive job—without creating an sbatch file—by using `sbatch --wrap`.
+This does not replace the usual `salloc` workflow; it is only a way to leave
+this long-running build with Slurm.
+
+```sh
+sbatch -p hsph -t 04:00:00 --mem=8G --cpus-per-task=2 -J "$(basename "$PWD")-build" --chdir="$PWD" --wrap="mkdir -p containers/build artifacts/containers && singularity exec --cleanenv --bind '$PWD:/work' artifacts/containers/spack-builder.sif /bin/bash -lc 'cd /work && spack -e . containerize > containers/build/kiribati-biomarkers.def' && singularity build --fakeroot artifacts/containers/kiribati-biomarkers.sif containers/build/kiribati-biomarkers.def"
+```
+
+```sh
+mkdir -p containers/build artifacts/containers && singularity exec --cleanenv --bind "$PWD:/work" artifacts/containers/spack-builder.sif /bin/bash -lc 'cd /work && spack -e . containerize > containers/build/kiribati-biomarkers.def' && singularity build --fakeroot artifacts/containers/kiribati-biomarkers.sif containers/build/kiribati-biomarkers.def
+```
+
+:::
+
+::: {.manual-check title="Verify the completed runtime and its evidence"}
+
+```sh
+singularity exec artifacts/containers/kiribati-biomarkers.sif R --version
+singularity exec artifacts/containers/kiribati-biomarkers.sif uvr --version
+singularity exec artifacts/containers/kiribati-biomarkers.sif test -r /opt/spack-environment/spack.lock
+singularity exec artifacts/containers/kiribati-biomarkers.sif test ! -e /opt/spack/bin/spack
+```
+
+:::

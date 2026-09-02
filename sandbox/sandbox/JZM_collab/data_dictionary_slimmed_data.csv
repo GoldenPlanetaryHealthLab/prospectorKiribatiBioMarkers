@@ -1,0 +1,48 @@
+name,label,data_type,ordered,value_labels,n_missing,complete_rate,n_unique,empty,top_counts,min,median,max,mean,sd,whitespace,hist
+uid,Unique Identifier (note that repeated measures per person have been removed to de-identify data),character,NA,NA,0,1,1166,0,NA,32,NA,32,NA,NA,0,NA
+hdl,HDL Cholesterol,numeric,NA,NA,533,0.5428816466552315,NA,NA,NA,20.00, 33.0, 139,34.69036334913112,9.979196019246908,NA,▇▁▁▁▁
+ldl,LDL Cholesterol,numeric,NA,NA,648,0.44425385934819894,NA,NA,NA, 0.00, 90.5, 225,94.34749034749035,32.03544494099629,NA,▁▇▆▂▁
+tc,Total Cholesterol,numeric,NA,NA,546,0.5317324185248713,NA,NA,NA,50.00,137.0, 282,144.50483870967741,38.007587574339894,NA,▁▇▅▂▁
+pulse,Pulse,numeric,NA,NA,492,0.5780445969125214,NA,NA,NA, 7.00, 70.0, 134,69.90356083086053,12.31005649931606,NA,▁▁▇▁▁
+glucose,Glucose,numeric,NA,NA,437,0.6252144082332762,NA,NA,NA,73.00,114.0, 514,126.92592592592592,48.159904211142006,NA,▇▁▁▁▁
+triglycerides,Triglycerides,numeric,NA,NA,548,0.5300171526586621,NA,NA,NA,40.00, 97.0, 500,111.04854368932038,58.902806295182955,NA,▇▂▁▁▁
+systolic,Systolic Blood Pressure,numeric,NA,NA,495,0.5754716981132075,NA,NA,NA,73.00,124.0, 194,125.07749627421758,19.391180107482036,NA,▁▇▇▂▁
+diastolic,Diastolic Blood Pressure,numeric,NA,NA,492,0.5780445969125214,NA,NA,NA,48.00, 83.0, 135,83.43768545994065,12.926577594439992,NA,▁▇▇▂▁
+temperature,Temperature in Fahrenheit,numeric,NA,NA,623,0.4656946826758147,NA,NA,NA,67.00, 97.0, 101,96.3985635359116,2.2159089659347435,NA,▁▁▁▁▇
+hemoglobin,Hemoglobin Level,numeric,NA,NA,271,0.7675814751286449,NA,NA,NA, 1.70, 13.6,  19,13.592067039106146,2.441689937198358,NA,▁▁▃▇▃
+hematocrit,Percentage of red blood cells,numeric,NA,NA,488,0.58147512864494,NA,NA,NA, 4.00, 42.3,  54,42.99321533923304,5.137387042903955,NA,▁▁▁▇▆
+diabetes,HbA1c level,numeric,NA,NA,568,0.5128644939965694,NA,NA,NA, 2.00,  5.2,  13,5.616555183946488,1.501393045870788,NA,▁▇▁▁▁
+age_group,Age Group,factor,FALSE,"1. 12-20,
+2. 20-40,
+3. over 40,
+4. under 12",3,0.9974271012006861,4,NA,"und: 383, 20-: 353, ove: 307, 12-: 120",NA,NA,NA,NA,NA,NA,NA
+fever,Fever recorded,factor,FALSE,"1. N,
+2. Y",623,0.4656946826758147,2,NA,"N: 542, Y: 1",NA,NA,NA,NA,NA,NA,NA
+BloodPressure_status,Blood Pressure Status,factor,FALSE,"1. Elevated,
+2. Hypertensive Crisis,
+3. Normal,
+4. Stage 1,
+5. Stage 2",498,0.5728987993138936,5,NA,"Sta: 259, Nor: 199, Sta: 154, Ele: 52",NA,NA,NA,NA,NA,NA,NA
+Glucose_status,Glucose Status,factor,FALSE,"1. Hyperglycemic,
+2. Normal",444,0.6192109777015438,2,NA,"Nor: 662, Hyp: 60",NA,NA,NA,NA,NA,NA,NA
+anemia_status,Anemia Status,factor,FALSE,"1. Age over 50,
+2. mild,
+3. moderate,
+4. non-anemic,
+5. severe",291,0.7504288164665524,5,NA,"non: 700, mil: 78, mod: 73, Age: 13",NA,NA,NA,NA,NA,NA,NA
+cholesterol_status,Cholesterol Status,factor,FALSE,"1. Age under 12,
+2. At risk,
+3. Normal",553,0.5257289879931389,3,NA,"At : 526, Nor: 81, Age: 6",NA,NA,NA,NA,NA,NA,NA
+triglycerides_status,Triglycerides Status,factor,FALSE,"1. Age under 12,
+2. Borderline hypertriglyceridemia,
+3. High-normal,
+4. Low-normal,
+5. Moderate hypertriglyceridemia,
+6. Severe hypertriglyceridemia",548,0.5300171526586621,6,NA,"Low: 325, Hig: 177, Bor: 71, Mod: 36",NA,NA,NA,NA,NA,NA,NA
+diabetes_status,Diabetes Status,factor,FALSE,"1. Age under 12,
+2. At risk,
+3. Diabetic,
+4. Normal",653,0.43996569468267577,4,NA,"Nor: 339, At : 92, Dia: 76, Age: 6",NA,NA,NA,NA,NA,NA,NA
+gender,Gender,factor,FALSE,"1. F,
+2. M",0,1,2,NA,"M: 589, F: 577",NA,NA,NA,NA,NA,NA,NA
+age_in_months,Age in Months at time of survey,numeric,NA,NA,0,1,NA,NA,NA, 0.42,305.9,1026,325.03888626896384,235.69841886387158,NA,▇▆▃▂▁

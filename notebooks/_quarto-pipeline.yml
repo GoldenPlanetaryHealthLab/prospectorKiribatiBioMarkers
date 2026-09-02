@@ -1,0 +1,10 @@
+emit:
+  project_root: ..
+
+project:
+  post-render: Rscript scripts/run-pipeline.R
+
+format:
+  GoldenPlanetaryHealthLab/quarto-manual-html:
+    filters:
+      - _extensions/GoldenPlanetaryHealthLab/quarto-emit/quarto-emit.lua

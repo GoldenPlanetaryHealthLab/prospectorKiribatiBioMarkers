@@ -1,0 +1,39 @@
+project:
+  type: book
+  output-dir: ../docs
+  render:
+    - "*.qmd"
+
+profile:
+  default: authoring
+
+book:
+  title: "Kiribati Biomarkers Curation Manual"
+  chapters:
+    - index.qmd
+    - part: "Project Setup"
+      chapters:
+        - 00_cover.qmd
+        - 01_misc-render-isolated.qmd
+        - 02_misc-project-contract.qmd
+        - 03_misc-data-governance.qmd
+    - part: "Infrastructure"
+      chapters:
+        - infrastructure/10_page-spack.qmd
+        - infrastructure/11_page-jinja.qmd
+        - infrastructure/12_page-jinja-build.qmd
+        - infrastructure/12_page-uvr.qmd
+        - infrastructure/13_page-runner.qmd
+    - part: "Pipeline"
+      chapters:
+        - pipeline/14_page-stage-inputs.qmd
+        - pipeline/15_page-inspect-source-data.qmd
+        - pipeline/16_page-targets-curation.qmd
+        - pipeline/17_page-execute-pipeline.qmd
+        - pipeline/18_page-verify-release.qmd
+
+execute:
+  eval: false
+
+format:
+  GoldenPlanetaryHealthLab/quarto-manual-html: default
