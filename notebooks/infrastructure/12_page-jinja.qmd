@@ -1,0 +1,89 @@
+---
+title: "Declare the Native Runtime"
+subtitle: "Review the project’s Spack requirements before building anything"
+execute:
+  eval: false
+engine: markdown
+---
+
+This page adds the project components to the empty workshop. `spack.yaml` is
+the reviewable declaration; it is deliberately not concretized or installed
+here. The next page turns this declaration into a Singularity recipe and builds
+the runtime inside the pinned Rocky 9 workshop.
+
+The runtime uses the `x86_64_v3` CPU baseline rather than the Sapphire Rapids
+build host. This preserves the broadly useful AVX2/FMA baseline while
+excluding AVX-512/VNNI, and applies the policy to every dependency rather than
+as a package-specific compiler-flag workaround.
+
+`targets` loads `igraph`, whose artifact requires `libglpk.so.40` and
+`libflexiblas.so.3`. `glpk` and `flexiblas` are therefore direct Spack
+specifications: OpenBLAS does not satisfy FlexiBLAS's distinct SONAME. R
+packages remain project-local and are declared after the runtime exists with
+`uvr`.
+
+::: {.manual-procedure .emit-config-yaml file="{{ emit.project_root }}/spack.yaml" title="Emit the project runtime declaration"}
+
+```yaml
+spack:
+  specs:
+  - r@4.5.1
+  - libxml2
+  - icu4c
+  - libx11
+  - git
+  - curl
+  - openssl
+  - libgit2
+  - cmake
+  - gmake
+  - freetype
+  - libjpeg-turbo
+  - libpng
+  - libtiff
+  - libwebp
+  - fontconfig
+  - fribidi
+  - harfbuzz
+  - libuv
+  - glpk
+  - flexiblas
+  view: true
+  concretizer:
+    unify: true
+  packages:
+    all:
+      require:
+      - target=x86_64_v3
+  config:
+    template_dirs:
+    - $env/containers/templates
+    - $spack/share/spack/templates
+  container:
+    format: singularity
+    images:
+      os: rockylinux:9
+      spack: 1.2.0
+    template: KiribatiBioMarkers.def.j2
+    os_packages:
+      final:
+      - ca-certificates
+      - findutils
+      - gzip
+      - tar
+      - which
+      - gcc
+      - gcc-c++
+      - make
+```
+
+:::
+
+::: {.manual-check title="Verify the declaration before building"}
+
+```sh
+quarto render notebooks --profile emit --no-execute
+rg -n 'r@4.5.1|glpk|flexiblas|target=x86_64_v3|rockylinux:9' spack.yaml
+```
+
+:::

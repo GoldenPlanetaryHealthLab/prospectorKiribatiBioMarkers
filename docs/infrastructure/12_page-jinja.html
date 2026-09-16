@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Kiribati Biomarkers Curation Manual</title>
+<title>8&nbsp; Declare the Native Runtime – Kiribati Biomarkers Curation Manual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -23,27 +23,63 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<link href="./00_cover.html" rel="next">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-2ee6e6ccb0d235fc4ff556a26be92d1b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../infrastructure/13_page-jinja-build.html" rel="next">
+<link href="../infrastructure/11_page-spack.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-2ee6e6ccb0d235fc4ff556a26be92d1b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -84,7 +120,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Kiribati Biomarkers Curation Manual</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../infrastructure/10_page-direnv.html">Infrastructure</a></li><li class="breadcrumb-item"><a href="../infrastructure/12_page-jinja.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Declare the Native Runtime</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -99,7 +135,7 @@ ul.task-list li input[type="checkbox"] {
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">Kiribati Biomarkers Curation Manual</a> 
+      <a href="../">Kiribati Biomarkers Curation Manual</a> 
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -111,7 +147,7 @@ ul.task-list li input[type="checkbox"] {
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Kiribati Biomarkers Curation Manual</span></span></a>
   </div>
 </li>
@@ -126,25 +162,25 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./00_cover.html" class="sidebar-item-text sidebar-link">
+  <a href="../00_cover.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Kiribati BioMarkers Pipeline Operator’s Manual</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./01_misc-render-isolated.html" class="sidebar-item-text sidebar-link">
+  <a href="../01_misc-render-isolated.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Render In Isolation</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./02_misc-project-contract.html" class="sidebar-item-text sidebar-link">
+  <a href="../02_misc-project-contract.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Project Contract</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./03_misc-data-governance.html" class="sidebar-item-text sidebar-link">
+  <a href="../03_misc-data-governance.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Data Governance</span></span></a>
   </div>
 </li>
@@ -161,37 +197,37 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/10_page-direnv.html" class="sidebar-item-text sidebar-link">
+  <a href="../infrastructure/10_page-direnv.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Local Operator Environment</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/11_page-spack.html" class="sidebar-item-text sidebar-link">
+  <a href="../infrastructure/11_page-spack.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Bootstrap the Spack Builder</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/12_page-jinja.html" class="sidebar-item-text sidebar-link">
+  <a href="../infrastructure/12_page-jinja.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Declare the Native Runtime</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/13_page-jinja-build.html" class="sidebar-item-text sidebar-link">
+  <a href="../infrastructure/13_page-jinja-build.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Customize and Build the Runtime</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/14_page-uvr.html" class="sidebar-item-text sidebar-link">
+  <a href="../infrastructure/14_page-uvr.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Lock and Synchronize R Packages</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/15_page-runner.html" class="sidebar-item-text sidebar-link">
+  <a href="../infrastructure/15_page-runner.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Run the Project Environment</span></span></a>
   </div>
 </li>
@@ -208,37 +244,37 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/16_page-stage-inputs.html" class="sidebar-item-text sidebar-link">
+  <a href="../pipeline/16_page-stage-inputs.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Stage Inputs</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/17_page-inspect-source-data.html" class="sidebar-item-text sidebar-link">
+  <a href="../pipeline/17_page-inspect-source-data.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Inspect Source Data</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/18_page-targets-curation.html" class="sidebar-item-text sidebar-link">
+  <a href="../pipeline/18_page-targets-curation.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Curate Release</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/19_page-package-release.html" class="sidebar-item-text sidebar-link">
+  <a href="../pipeline/19_page-package-release.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Package Release</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/20_page-execute-pipeline.html" class="sidebar-item-text sidebar-link">
+  <a href="../pipeline/20_page-execute-pipeline.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Execute Pipeline</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/21_page-verify-release.html" class="sidebar-item-text sidebar-link">
+  <a href="../pipeline/21_page-verify-release.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Verify Release</span></span></a>
   </div>
 </li>
@@ -255,9 +291,10 @@ ul.task-list li input[type="checkbox"] {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../infrastructure/10_page-direnv.html">Infrastructure</a></li><li class="breadcrumb-item"><a href="../infrastructure/12_page-jinja.html"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Declare the Native Runtime</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">Kiribati Biomarkers Curation Manual</h1>
+<h1 class="title"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Declare the Native Runtime</span></h1>
+<p class="subtitle lead">Review the project’s Spack requirements before building anything</p>
 </div>
 
 
@@ -274,7 +311,65 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>This manual will guide preparation, curation, execution, and verification of the Kiribati biomarkers data-release pipeline.</p>
+<p>This page adds the project components to the empty workshop. <code>spack.yaml</code> is the reviewable declaration; it is deliberately not concretized or installed here. The next page turns this declaration into a Singularity recipe and builds the runtime inside the pinned Rocky 9 workshop.</p>
+<p>The runtime uses the <code>x86_64_v3</code> CPU baseline rather than the Sapphire Rapids build host. This preserves the broadly useful AVX2/FMA baseline while excluding AVX-512/VNNI, and applies the policy to every dependency rather than as a package-specific compiler-flag workaround.</p>
+<p><code>targets</code> loads <code>igraph</code>, whose artifact requires <code>libglpk.so.40</code> and <code>libflexiblas.so.3</code>. <code>glpk</code> and <code>flexiblas</code> are therefore direct Spack specifications: OpenBLAS does not satisfy FlexiBLAS’s distinct SONAME. R packages remain project-local and are declared after the runtime exists with <code>uvr</code>.</p>
+<div class="manual-procedure emit-config-yaml callout callout-tip" data-file="{{ emit.project_root }}/spack.yaml" title="Emit the project runtime declaration">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource yaml number-lines code-with-copy"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1"></a><span class="fu">spack</span><span class="kw">:</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="at">  </span><span class="fu">specs</span><span class="kw">:</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="at">  </span><span class="kw">-</span><span class="at"> r@4.5.1</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="at">  </span><span class="kw">-</span><span class="at"> libxml2</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="at">  </span><span class="kw">-</span><span class="at"> icu4c</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="at">  </span><span class="kw">-</span><span class="at"> libx11</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="at">  </span><span class="kw">-</span><span class="at"> git</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="at">  </span><span class="kw">-</span><span class="at"> curl</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="at">  </span><span class="kw">-</span><span class="at"> openssl</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="at">  </span><span class="kw">-</span><span class="at"> libgit2</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="at">  </span><span class="kw">-</span><span class="at"> cmake</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a><span class="at">  </span><span class="kw">-</span><span class="at"> gmake</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a><span class="at">  </span><span class="kw">-</span><span class="at"> freetype</span></span>
+<span id="cb1-14"><a href="#cb1-14"></a><span class="at">  </span><span class="kw">-</span><span class="at"> libjpeg-turbo</span></span>
+<span id="cb1-15"><a href="#cb1-15"></a><span class="at">  </span><span class="kw">-</span><span class="at"> libpng</span></span>
+<span id="cb1-16"><a href="#cb1-16"></a><span class="at">  </span><span class="kw">-</span><span class="at"> libtiff</span></span>
+<span id="cb1-17"><a href="#cb1-17"></a><span class="at">  </span><span class="kw">-</span><span class="at"> libwebp</span></span>
+<span id="cb1-18"><a href="#cb1-18"></a><span class="at">  </span><span class="kw">-</span><span class="at"> fontconfig</span></span>
+<span id="cb1-19"><a href="#cb1-19"></a><span class="at">  </span><span class="kw">-</span><span class="at"> fribidi</span></span>
+<span id="cb1-20"><a href="#cb1-20"></a><span class="at">  </span><span class="kw">-</span><span class="at"> harfbuzz</span></span>
+<span id="cb1-21"><a href="#cb1-21"></a><span class="at">  </span><span class="kw">-</span><span class="at"> libuv</span></span>
+<span id="cb1-22"><a href="#cb1-22"></a><span class="at">  </span><span class="kw">-</span><span class="at"> glpk</span></span>
+<span id="cb1-23"><a href="#cb1-23"></a><span class="at">  </span><span class="kw">-</span><span class="at"> flexiblas</span></span>
+<span id="cb1-24"><a href="#cb1-24"></a><span class="at">  </span><span class="fu">view</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb1-25"><a href="#cb1-25"></a><span class="at">  </span><span class="fu">concretizer</span><span class="kw">:</span></span>
+<span id="cb1-26"><a href="#cb1-26"></a><span class="at">    </span><span class="fu">unify</span><span class="kw">:</span><span class="at"> </span><span class="ch">true</span></span>
+<span id="cb1-27"><a href="#cb1-27"></a><span class="at">  </span><span class="fu">packages</span><span class="kw">:</span></span>
+<span id="cb1-28"><a href="#cb1-28"></a><span class="at">    </span><span class="fu">all</span><span class="kw">:</span></span>
+<span id="cb1-29"><a href="#cb1-29"></a><span class="at">      </span><span class="fu">require</span><span class="kw">:</span></span>
+<span id="cb1-30"><a href="#cb1-30"></a><span class="at">      </span><span class="kw">-</span><span class="at"> target=x86_64_v3</span></span>
+<span id="cb1-31"><a href="#cb1-31"></a><span class="at">  </span><span class="fu">config</span><span class="kw">:</span></span>
+<span id="cb1-32"><a href="#cb1-32"></a><span class="at">    </span><span class="fu">template_dirs</span><span class="kw">:</span></span>
+<span id="cb1-33"><a href="#cb1-33"></a><span class="at">    </span><span class="kw">-</span><span class="at"> $env/containers/templates</span></span>
+<span id="cb1-34"><a href="#cb1-34"></a><span class="at">    </span><span class="kw">-</span><span class="at"> $spack/share/spack/templates</span></span>
+<span id="cb1-35"><a href="#cb1-35"></a><span class="at">  </span><span class="fu">container</span><span class="kw">:</span></span>
+<span id="cb1-36"><a href="#cb1-36"></a><span class="at">    </span><span class="fu">format</span><span class="kw">:</span><span class="at"> singularity</span></span>
+<span id="cb1-37"><a href="#cb1-37"></a><span class="at">    </span><span class="fu">images</span><span class="kw">:</span></span>
+<span id="cb1-38"><a href="#cb1-38"></a><span class="at">      </span><span class="fu">os</span><span class="kw">:</span><span class="at"> rockylinux:9</span></span>
+<span id="cb1-39"><a href="#cb1-39"></a><span class="at">      </span><span class="fu">spack</span><span class="kw">:</span><span class="at"> </span><span class="fl">1.2.0</span></span>
+<span id="cb1-40"><a href="#cb1-40"></a><span class="at">    </span><span class="fu">template</span><span class="kw">:</span><span class="at"> KiribatiBioMarkers.def.j2</span></span>
+<span id="cb1-41"><a href="#cb1-41"></a><span class="at">    </span><span class="fu">os_packages</span><span class="kw">:</span></span>
+<span id="cb1-42"><a href="#cb1-42"></a><span class="at">      </span><span class="fu">final</span><span class="kw">:</span></span>
+<span id="cb1-43"><a href="#cb1-43"></a><span class="at">      </span><span class="kw">-</span><span class="at"> ca-certificates</span></span>
+<span id="cb1-44"><a href="#cb1-44"></a><span class="at">      </span><span class="kw">-</span><span class="at"> findutils</span></span>
+<span id="cb1-45"><a href="#cb1-45"></a><span class="at">      </span><span class="kw">-</span><span class="at"> gzip</span></span>
+<span id="cb1-46"><a href="#cb1-46"></a><span class="at">      </span><span class="kw">-</span><span class="at"> tar</span></span>
+<span id="cb1-47"><a href="#cb1-47"></a><span class="at">      </span><span class="kw">-</span><span class="at"> which</span></span>
+<span id="cb1-48"><a href="#cb1-48"></a><span class="at">      </span><span class="kw">-</span><span class="at"> gcc</span></span>
+<span id="cb1-49"><a href="#cb1-49"></a><span class="at">      </span><span class="kw">-</span><span class="at"> gcc-c++</span></span>
+<span id="cb1-50"><a href="#cb1-50"></a><span class="at">      </span><span class="kw">-</span><span class="at"> make</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="manual-check callout callout-warning" title="Verify the declaration before building">
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource sh number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1"></a><span class="ex">quarto</span> render notebooks <span class="at">--profile</span> emit <span class="at">--no-execute</span></span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="ex">rg</span> <span class="at">-n</span> <span class="st">'r@4.5.1|glpk|flexiblas|target=x86_64_v3|rockylinux:9'</span> spack.yaml</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 
 
 
@@ -681,10 +776,13 @@ ul.task-list li input[type="checkbox"] {
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
+      <a href="../infrastructure/11_page-spack.html" class="pagination-link" aria-label="Bootstrap the Spack Builder">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Bootstrap the Spack Builder</span></span>
+      </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./00_cover.html" class="pagination-link" aria-label="Kiribati BioMarkers Pipeline Operator's Manual">
-        <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Kiribati BioMarkers Pipeline Operator’s Manual</span></span> <i class="bi bi-arrow-right-short"></i>
+      <a href="../infrastructure/13_page-jinja-build.html" class="pagination-link" aria-label="Customize and Build the Runtime">
+        <span class="nav-page-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Customize and Build the Runtime</span></span> <i class="bi bi-arrow-right-short"></i>
       </a>
   </div>
 </nav>

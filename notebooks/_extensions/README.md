@@ -14,7 +14,7 @@ Quarto 1.9.38.
 
 The default `authoring` profile uses the Manual's native `book` project type
 and `manual-html` format without loading Quarto-emit. The `emit` and
-`pipeline` profiles load Quarto-emit; their profile environment files set
-`QUARTO_EMIT=1`, allowing only those renders to materialize generated files.
-The `pipeline` profile additionally runs the input-provenance graph after a
-full render.
+profile load Quarto-emit; its profile environment file sets `QUARTO_EMIT=1`,
+allowing only that render mode to materialize generated files. Manual renders
+disable code execution. Scientific work runs separately through the
+container runtime and the emitted targets graph.

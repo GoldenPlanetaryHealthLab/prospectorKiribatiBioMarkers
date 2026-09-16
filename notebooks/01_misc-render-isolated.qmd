@@ -2,6 +2,7 @@
 title: "Render In Isolation"
 execute:
   eval: false
+engine: markdown
 ---
 
 The first page of our project establishes Quarto as our
@@ -120,22 +121,20 @@ Quarto profiles keep the three kinds of work in this project explicit:
 `authoring` is the default for reading, editing, and previewing the Manual;
 it renders the site without loading the file-emission extension. `emit` loads
 that extension and materializes the scripts and configuration described by the
-Manual. `pipeline` does everything `emit` does, then runs the
-input-provenance graph after a complete render.
+Manual. Both profiles disable code execution completely: rendering and
+emission are host-side documentation operations, not scientific computation.
 
 They are separate because these operations have different side effects and
 review expectations. An ordinary authoring render should be safe to repeat
 without unexpectedly changing generated files or processing data. Emitting
 files is an intentional, reviewable synchronization from the Manual to its
-derived artifacts, while the pipeline profile makes data-processing execution
-an equally deliberate step.
+derived artifacts.
 
 The isolated wrapper promotes files recorded by Quarto-emit's manifest after a
 successful render, so an `emit` render updates the Manual's generated scripts
-and configuration in the checkout. It does not promote arbitrary staged state:
-in particular, data products created by the `pipeline` profile remain in the
-staging copy. Run that profile only when its pipeline effects are intentionally
-managed outside this wrapper.
+and configuration in the checkout. It does not run targets or promote arbitrary
+data products. Run scientific work separately through the container runner after
+reviewing the emitted targets graph.
 
 ::: {.manual-explain title="Why Staging Prevents The Freeze Failure"}
 
@@ -152,7 +151,7 @@ has no shared mutable directory to remove.
 Materialize the script and check its syntax:
 
 ```sh
-quarto render notebooks --profile emit
+quarto render notebooks --profile emit --no-execute
 bash -n scripts/render-isolated
 ```
 

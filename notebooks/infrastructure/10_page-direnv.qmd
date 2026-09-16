@@ -1,0 +1,69 @@
+---
+title: "Local Operator Environment"
+execute:
+  eval: false
+engine: markdown
+---
+
+direnv is an optional command-line convenience for a Manual operator. It is
+not part of the scientific execution environment: the container runner starts
+with a clean environment, and Spack plus the container image define the R ABI,
+system libraries, and reproducible package installation.
+
+The generated .envrc only helps an operator locate this checkout and invoke the
+isolated Manual render with a memorable command. It does not contain data
+locations, credentials, release parameters, library paths, or scientific
+dependencies.
+
+::: {.manual-prereq title="Enable The Local Convenience Layer"}
+
+Install direnv, ensure its shell hook is enabled, then run direnv allow from
+the repository root after materializing the file. Re-run direnv allow whenever
+its contents change.
+
+:::
+
+::: {.manual-procedure .emit-generic file="{{ emit.project_root }}/.envrc" title="Materialize The Local direnv Contract"}
+
+~~~bash
+# This file is generated from notebooks/infrastructure/10_page-direnv.qmd.
+# It is intentionally local and ignored by Git.
+
+export PROJECT_DIR="$(CDPATH= cd -- "$(dirname -- "$BASH_SOURCE")" && pwd)"
+PATH_add "$PROJECT_DIR/scripts"
+~~~
+
+:::
+
+## What this does—and does not—provide
+
+This file deliberately does not set PATH, SPACK_VIEW, LD_LIBRARY_PATH, or
+PKG_CONFIG_PATH. Those variables cannot configure a clean container invocation
+and would blur the boundary between host-side engineering and scientific work.
+The runner and image establish the scientific environment inside Singularity.
+direnv adds only the existing generated scripts directory to PATH; it does not
+create a function, alias, shim, or additional implementation file.
+
+Use the existing isolated-render command without its path for the normal Manual
+workflow:
+
+~~~sh
+render-isolated --profile authoring
+render-isolated --profile emit
+~~~
+
+For Slurm jobs, scripts, or systems without direnv, invoke
+scripts/render-isolated directly. That wrapper remains the one portable,
+auditable implementation; direnv only removes its path from an interactive
+shell.
+
+::: {.manual-check title="Verify The Activated Environment"}
+
+~~~sh
+direnv allow
+test "$PROJECT_DIR" = "$PWD"
+command -v quarto
+type render-isolated
+~~~
+
+:::

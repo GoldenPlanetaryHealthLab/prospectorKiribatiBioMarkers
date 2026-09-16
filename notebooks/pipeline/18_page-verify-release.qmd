@@ -1,7 +1,0 @@
----
-title: "Verify Release"
-execute:
-  eval: false
----
-
-Stub for release validation, provenance checks, and operator sign-off.

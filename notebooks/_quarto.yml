@@ -4,6 +4,10 @@ project:
   render:
     - "*.qmd"
 
+# The Manual displays source code and emits selected artifacts, but it never
+# initializes a computational engine. The container runner owns R execution.
+engine: markdown
+
 profile:
   default: authoring
 
@@ -19,21 +23,23 @@ book:
         - 03_misc-data-governance.qmd
     - part: "Infrastructure"
       chapters:
-        - infrastructure/10_page-spack.qmd
-        - infrastructure/11_page-jinja.qmd
-        - infrastructure/12_page-jinja-build.qmd
-        - infrastructure/12_page-uvr.qmd
-        - infrastructure/13_page-runner.qmd
+        - infrastructure/10_page-direnv.qmd
+        - infrastructure/11_page-spack.qmd
+        - infrastructure/12_page-jinja.qmd
+        - infrastructure/13_page-jinja-build.qmd
+        - infrastructure/14_page-uvr.qmd
+        - infrastructure/15_page-runner.qmd
     - part: "Pipeline"
       chapters:
-        - pipeline/14_page-stage-inputs.qmd
-        - pipeline/15_page-inspect-source-data.qmd
-        - pipeline/16_page-targets-curation.qmd
-        - pipeline/17_page-execute-pipeline.qmd
-        - pipeline/18_page-verify-release.qmd
+        - pipeline/16_page-stage-inputs.qmd
+        - pipeline/17_page-inspect-source-data.qmd
+        - pipeline/18_page-targets-curation.qmd
+        - pipeline/19_page-package-release.qmd
+        - pipeline/20_page-execute-pipeline.qmd
+        - pipeline/21_page-verify-release.qmd
 
 execute:
-  eval: false
+  enabled: false
 
 format:
   GoldenPlanetaryHealthLab/quarto-manual-html: default

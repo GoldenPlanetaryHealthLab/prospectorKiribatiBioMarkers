@@ -2,6 +2,7 @@
 title: "Project Contract"
 execute:
   eval: false
+engine: markdown
 ---
 
 This page defines the different components of the project and emits

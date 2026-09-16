@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>2&nbsp; Manual Scope and Safety – Kiribati Biomarkers Curation Manual</title>
+<title>2&nbsp; Kiribati BioMarkers Pipeline Operator’s Manual – Kiribati Biomarkers Curation Manual</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -72,6 +72,9 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script src="site_libs/quarto-diagram/mermaid.min.js"></script>
+<script src="site_libs/quarto-diagram/mermaid-init.js"></script>
+<link href="site_libs/quarto-diagram/mermaid.css" rel="stylesheet">
 
 
 </head>
@@ -85,7 +88,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./00_cover.html">Project Setup</a></li><li class="breadcrumb-item"><a href="./00_cover.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Manual Scope and Safety</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./00_cover.html">Project Setup</a></li><li class="breadcrumb-item"><a href="./00_cover.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Kiribati BioMarkers Pipeline Operator’s Manual</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -128,7 +131,7 @@ ul.task-list li input[type="checkbox"] {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./00_cover.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Manual Scope and Safety</span></span></a>
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Kiribati BioMarkers Pipeline Operator’s Manual</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -162,32 +165,38 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/10_page-spack.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Bootstrap the Spack Builder</span></span></a>
+  <a href="./infrastructure/10_page-direnv.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Local Operator Environment</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/11_page-jinja.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Declare the Native Runtime</span></span></a>
+  <a href="./infrastructure/11_page-spack.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Bootstrap the Spack Builder</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/12_page-jinja-build.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Customize and Build the Runtime</span></span></a>
+  <a href="./infrastructure/12_page-jinja.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Declare the Native Runtime</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/12_page-uvr.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Lock and Synchronize R Packages</span></span></a>
+  <a href="./infrastructure/13_page-jinja-build.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Customize and Build the Runtime</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./infrastructure/13_page-runner.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Run the Project Environment</span></span></a>
+  <a href="./infrastructure/14_page-uvr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Lock and Synchronize R Packages</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./infrastructure/15_page-runner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Run the Project Environment</span></span></a>
   </div>
 </li>
       </ul>
@@ -203,32 +212,38 @@ ul.task-list li input[type="checkbox"] {
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/14_page-stage-inputs.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Stage Inputs</span></span></a>
+  <a href="./pipeline/16_page-stage-inputs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Stage Inputs</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/15_page-inspect-source-data.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Inspect Source Data</span></span></a>
+  <a href="./pipeline/17_page-inspect-source-data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Inspect Source Data</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/16_page-targets-curation.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Curate Release</span></span></a>
+  <a href="./pipeline/18_page-targets-curation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Curate Release</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/17_page-execute-pipeline.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Execute Pipeline</span></span></a>
+  <a href="./pipeline/19_page-package-release.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Package Release</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pipeline/18_page-verify-release.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Verify Release</span></span></a>
+  <a href="./pipeline/20_page-execute-pipeline.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Execute Pipeline</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pipeline/21_page-verify-release.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Verify Release</span></span></a>
   </div>
 </li>
       </ul>
@@ -244,9 +259,9 @@ ul.task-list li input[type="checkbox"] {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./00_cover.html">Project Setup</a></li><li class="breadcrumb-item"><a href="./00_cover.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Manual Scope and Safety</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./00_cover.html">Project Setup</a></li><li class="breadcrumb-item"><a href="./00_cover.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Kiribati BioMarkers Pipeline Operator’s Manual</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Manual Scope and Safety</span></h1>
+<h1 class="title"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Kiribati BioMarkers Pipeline Operator’s Manual</span></h1>
 </div>
 
 
@@ -263,7 +278,76 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<p>Stub for the manual scope, intended operators, data-access boundaries, and required approvals.</p>
+<p>This manual composes and runs the entire pipeline for cleaning, curating, and distributing our Kiribati BioMarkers datasets. The intended audience for this document is:</p>
+<ol type="1">
+<li>Developers/data scientists who need to run the pipeline to produce outputs</li>
+<li>Developers/data scientists who need to add features</li>
+<li>Reviewers who need to ensure the accuracy and validity of the pipeline.</li>
+</ol>
+<p>The <code>/notebooks</code> directory provides the Quarto Manual, which is a human-facing interface for “operating” the pipeline. Following the pages step-by-step allows readers to:</p>
+<ul>
+<li>Recreate the computational environment necessary for running the pipeline</li>
+<li>Understand the logical flow of data from source to output</li>
+<li>Identify key decision points in analysis and data curation</li>
+<li>Scrutinize the codebase without having to run it locally</li>
+<li>Reproduce the pipeline on your own cluster or machine</li>
+</ul>
+<p>As it becomes fleshed out, the pipeline diagram below provides an overview of the pipeline.</p>
+<div class="cell" data-eval="true" data-file="../data/interim/pipeline.mmd" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">graph TD
+  style Legend fill:#FFFFFF00,stroke:#000000;
+  style Graph fill:#FFFFFF00,stroke:#000000;
+  subgraph Legend
+    x2db1ec7a48f65a9b(["Outdated"]):::outdated
+    xf1522833a4d242c5(["Up to date"]):::uptodate
+    xd03d7c7dd2ddda2b(["Regular target"]):::none
+  end
+  subgraph Graph
+    direction TD
+    x00faecd66ae8cb6b(["raw_inputs"]):::uptodate --&gt; xa56228562e67f880(["biomarker_csv"]):::uptodate
+    xa13f9c3dd9c913c9(["curation_audit_table"]):::outdated --&gt; x5810e88fa694ad09(["curation_audit_csv"]):::outdated
+    x6cdc9e282cde030e(["write_csv"]):::outdated --&gt; x5810e88fa694ad09(["curation_audit_csv"]):::outdated
+    xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated --&gt; xa13f9c3dd9c913c9(["curation_audit_table"]):::outdated
+    xa56228562e67f880(["biomarker_csv"]):::uptodate --&gt; xaa0617a4f9ee8713(["curation_inputs"]):::outdated
+    x114fa92bd01c3165(["village_metadata_input_candidates"]):::outdated --&gt; xaa0617a4f9ee8713(["curation_inputs"]):::outdated
+    xaa0617a4f9ee8713(["curation_inputs"]):::outdated --&gt; x1562d34ae42a44ea(["curation_source"]):::outdated
+    x1562d34ae42a44ea(["curation_source"]):::outdated --&gt; xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated
+    x183f928c00bf9a11(["stagecoach_manifest"]):::uptodate --&gt; x00faecd66ae8cb6b(["raw_inputs"]):::uptodate
+    xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated --&gt; x06531cb3f3e20066(["slimmed_data"]):::outdated
+    x0ae6e58e63e399e7(["hash_identifier"]):::outdated --&gt; x06531cb3f3e20066(["slimmed_data"]):::outdated
+    x6cdc9e282cde030e(["write_csv"]):::outdated --&gt; x22eb22f41b401cf0(["slimmed_data_csv"]):::outdated
+    x06531cb3f3e20066(["slimmed_data"]):::outdated --&gt; x22eb22f41b401cf0(["slimmed_data_csv"]):::outdated
+    x06531cb3f3e20066(["slimmed_data"]):::outdated --&gt; xeefa05505567fee7(["slimmed_data_dictionary_csv"]):::outdated
+    x26f1594c1936d4c2(["slimmed_dictionary_labels"]):::outdated --&gt; xeefa05505567fee7(["slimmed_data_dictionary_csv"]):::outdated
+    xa9e228a492b01a7f(["write_dictionary"]):::outdated --&gt; xeefa05505567fee7(["slimmed_data_dictionary_csv"]):::outdated
+    xf0bebe119bf563cc(["village_metadata"]):::outdated --&gt; xa6fe0ecfd0666f8e(["small_data"]):::outdated
+    xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated --&gt; xa6fe0ecfd0666f8e(["small_data"]):::outdated
+    x0ae6e58e63e399e7(["hash_identifier"]):::outdated --&gt; xa6fe0ecfd0666f8e(["small_data"]):::outdated
+    xa6fe0ecfd0666f8e(["small_data"]):::outdated --&gt; x34055546386d3055(["small_data_csv"]):::outdated
+    x6cdc9e282cde030e(["write_csv"]):::outdated --&gt; x34055546386d3055(["small_data_csv"]):::outdated
+    xeaf3a844c0cb1467(["small_dictionary_labels"]):::outdated --&gt; x383914c3e61dc305(["small_data_dictionary_csv"]):::outdated
+    xa6fe0ecfd0666f8e(["small_data"]):::outdated --&gt; x383914c3e61dc305(["small_data_dictionary_csv"]):::outdated
+    xa9e228a492b01a7f(["write_dictionary"]):::outdated --&gt; x383914c3e61dc305(["small_data_dictionary_csv"]):::outdated
+    xaa0617a4f9ee8713(["curation_inputs"]):::outdated --&gt; xf0bebe119bf563cc(["village_metadata"]):::outdated
+    x00faecd66ae8cb6b(["raw_inputs"]):::uptodate --&gt; x114fa92bd01c3165(["village_metadata_input_candidates"]):::outdated
+    x88658f6622b2f904(["assert_required_columns"]):::outdated
+    x0916821a3db8ca12(["biomarker_required_columns"]):::outdated
+    x396e84be80348597(["village_metadata_required_columns"]):::outdated
+  end
+  classDef outdated stroke:#000000,color:#000000,fill:#78B7C5;
+  classDef uptodate stroke:#000000,color:#ffffff,fill:#354823;
+  classDef none stroke:#000000,color:#000000,fill:#94a4ac;
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>TEST AFTER THE DIAGRAM</p>
 
 
 

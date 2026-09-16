@@ -72,7 +72,6 @@ dependencies = [
     "websocket",
     "AsioHeaders",
     "svglite",
-    { name = "sess", git = "https://github.com/REditorSupport/vscode-R", branch = "master", directory = "sess" },
     "targets",
     "tarchetypes",
     "parsermd",

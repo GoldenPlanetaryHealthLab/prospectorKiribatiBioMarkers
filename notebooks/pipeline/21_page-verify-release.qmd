@@ -1,0 +1,90 @@
+---
+title: "Verify Release"
+execute:
+  eval: false
+engine: markdown
+---
+
+Release verification is an explicit operator step after the target graph has
+completed. Run these checks inside the supported container and retain their
+output with the release record.
+
+::: {.manual-prereq title="Confirm Pipeline Completion"}
+
+Confirm that `targets::tar_make()` completed and that
+`data/outputs/releases/v0.1.0/datapackage.json` exists.
+
+:::
+
+::: {.manual-procedure title="Validate The Frictionless Release"}
+
+```r
+release_directory_chr <- file.path(
+  "data", "outputs", "releases", "v0.1.0"
+)
+release_package_list <- frictionless::read_package(
+  file.path(release_directory_chr, "datapackage.json")
+)
+
+stopifnot(
+  setequal(
+    frictionless::resource_names(release_package_list),
+    c("biomarker_ptx", "demog_ptx")
+  )
+)
+
+biomarker_release_df <- frictionless::read_resource(
+  release_package_list,
+  "biomarker_ptx"
+)
+demog_release_df <- frictionless::read_resource(
+  release_package_list,
+  "demog_ptx"
+)
+
+stopifnot(
+  !any(c("community", "island") %in% names(biomarker_release_df)),
+  !any(c("community", "island") %in% names(demog_release_df))
+)
+
+schema_description_complete <- function(package_list, resource_name_chr) {
+  resource_schema_list <- frictionless::schema(
+    package_list,
+    resource_name_chr
+  )
+  all(vapply(
+    resource_schema_list$fields,
+    function(field_list) {
+      !is.null(field_list$description) && nzchar(field_list$description)
+    },
+    logical(1)
+  ))
+}
+
+stopifnot(
+  schema_description_complete(release_package_list, "biomarker_ptx"),
+  schema_description_complete(release_package_list, "demog_ptx")
+)
+
+stopifnot(isTRUE(all.equal(
+  biomarker_release_df,
+  targets::tar_read(biomarker_ptx_clinical_participant_curated_df),
+  check.attributes = FALSE
+)))
+stopifnot(isTRUE(all.equal(
+  demog_release_df,
+  targets::tar_read(demog_ptx_location_participant_curated_df),
+  check.attributes = FALSE
+)))
+```
+
+:::
+
+::: {.manual-check title="Confirm Pipeline Stability"}
+
+Run `targets::tar_make()` a second time without changing inputs or code. It
+should perform no target work. Then inspect `targets::tar_manifest()` and the
+generated graph to confirm that no `slimmed_*`, `small_*`, `curation_*`, or
+generic writer targets remain.
+
+:::

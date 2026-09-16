@@ -497,6 +497,25 @@ requires = [
 ]
 
 [[package]]
+name = "frictionless"
+version = "1.3.0"
+source = "cran"
+raw_version = "1.3.0"
+url = "https://cran.r-project.org/src/contrib/frictionless_1.3.0.tar.gz"
+checksum = "md5:635ef744bff41655bd4fa7cbf523e40d"
+requires = [
+    "cli",
+    "dplyr",
+    "httr",
+    "jsonlite",
+    "lifecycle",
+    "purrr",
+    "readr",
+    "rlang",
+    "yaml",
+]
+
+[[package]]
 name = "fs"
 version = "2.1.0"
 source = "cran"
@@ -748,6 +767,21 @@ requires = [
     "Rcpp",
     "later",
     "Rcpp",
+]
+
+[[package]]
+name = "httr"
+version = "1.4.9"
+source = "cran"
+raw_version = "1.4.9"
+url = "https://cran.r-project.org/src/contrib/httr_1.4.9.tar.gz"
+checksum = "md5:22833540ae6b924a3de576cf6c9c8e50"
+requires = [
+    "curl",
+    "jsonlite",
+    "mime",
+    "openssl",
+    "R6",
 ]
 
 [[package]]
@@ -1831,11 +1865,11 @@ requires = ["cpp11"]
 
 [[package]]
 name = "tinytex"
-version = "0.60.0"
+version = "0.61.0"
 source = "cran"
-raw_version = "0.60"
-url = "https://cran.r-project.org/src/contrib/tinytex_0.60.tar.gz"
-checksum = "md5:c680dc21cfd948a22a4f72427967e3e0"
+raw_version = "0.61"
+url = "https://cran.r-project.org/src/contrib/tinytex_0.61.tar.gz"
+checksum = "md5:67e114649aa529e1631baed939110e97"
 requires = ["xfun"]
 
 [[package]]
@@ -1994,11 +2028,11 @@ checksum = "md5:121bf3699aadb9d1b47d648964b934f8"
 
 [[package]]
 name = "xfun"
-version = "0.60.0"
+version = "0.61.0"
 source = "cran"
-raw_version = "0.60"
-url = "https://cran.r-project.org/src/contrib/xfun_0.60.tar.gz"
-checksum = "md5:1bea9ab58602d9b6eac3b5823a95e5e6"
+raw_version = "0.61"
+url = "https://cran.r-project.org/src/contrib/xfun_0.61.tar.gz"
+checksum = "md5:70130070c686204fb71dbf20c6c871ac"
 
 [[package]]
 name = "xml2"

@@ -1,0 +1,38 @@
+graph LR
+  style Legend fill:#FFFFFF00,stroke:#000000;
+  style Graph fill:#FFFFFF00,stroke:#000000;
+  subgraph Legend
+    x2db1ec7a48f65a9b(["Outdated"]):::outdated
+    xf1522833a4d242c5(["Up to date"]):::uptodate
+    xd03d7c7dd2ddda2b(["Regular target"]):::none
+  end
+  subgraph Graph
+    direction LR
+    xa13f9c3dd9c913c9(["curation_audit_table"]):::outdated --> x5810e88fa694ad09(["curation_audit_csv"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> x5810e88fa694ad09(["curation_audit_csv"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> xa13f9c3dd9c913c9(["curation_audit_table"]):::outdated
+    xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated --> xa13f9c3dd9c913c9(["curation_audit_table"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> xaa0617a4f9ee8713(["curation_inputs"]):::outdated
+    x00faecd66ae8cb6b(["raw_inputs"]):::uptodate --> xaa0617a4f9ee8713(["curation_inputs"]):::outdated
+    xaa0617a4f9ee8713(["curation_inputs"]):::outdated --> x1562d34ae42a44ea(["curation_source"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated
+    x1562d34ae42a44ea(["curation_source"]):::outdated --> xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated
+    xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated --> x06531cb3f3e20066(["slimmed_data"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> x06531cb3f3e20066(["slimmed_data"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> x22eb22f41b401cf0(["slimmed_data_csv"]):::outdated
+    x06531cb3f3e20066(["slimmed_data"]):::outdated --> x22eb22f41b401cf0(["slimmed_data_csv"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> xeefa05505567fee7(["slimmed_data_dictionary_csv"]):::outdated
+    x06531cb3f3e20066(["slimmed_data"]):::outdated --> xeefa05505567fee7(["slimmed_data_dictionary_csv"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> xa6fe0ecfd0666f8e(["small_data"]):::outdated
+    xa0030f11ecfc96cf(["curation_source_with_age"]):::outdated --> xa6fe0ecfd0666f8e(["small_data"]):::outdated
+    xf0bebe119bf563cc(["village_metadata"]):::outdated --> xa6fe0ecfd0666f8e(["small_data"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> x34055546386d3055(["small_data_csv"]):::outdated
+    xa6fe0ecfd0666f8e(["small_data"]):::outdated --> x34055546386d3055(["small_data_csv"]):::outdated
+    xf30ffa1d31ebbe2a(["curation_helpers"]):::outdated --> x383914c3e61dc305(["small_data_dictionary_csv"]):::outdated
+    xa6fe0ecfd0666f8e(["small_data"]):::outdated --> x383914c3e61dc305(["small_data_dictionary_csv"]):::outdated
+    xaa0617a4f9ee8713(["curation_inputs"]):::outdated --> xf0bebe119bf563cc(["village_metadata"]):::outdated
+    x183f928c00bf9a11(["stagecoach_manifest"]):::uptodate
+  end
+  classDef outdated stroke:#000000,color:#000000,fill:#78B7C5;
+  classDef uptodate stroke:#000000,color:#ffffff,fill:#354823;
+  classDef none stroke:#000000,color:#000000,fill:#94a4ac;
