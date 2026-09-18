@@ -1,21 +1,30 @@
 {
-    "r.plot.useHttpgd": true,
-    "r.rterm.linux": "${workspaceFolder}/.vscode/arf",
-    "r.workspaceViewer.showObjectSize": true,
-    "terminal.integrated.defaultProfile.linux": "bash",
-    "terminal.integrated.profiles.linux": {
-        "bash": {
-        "path": "/bin/bash"
-        }
-    },
-    "livePreview.defaultPreviewPath": "/docs/index.html",
-    "r.bracketedPaste": true,
-    "r.sessionWatcher": true,
-    "r.alwaysUseActiveTerminal": true,
-    "r.rpath.linux": "/n/holylabs/cgolden_lab/Lab/frontier/works/prospectors/prospectorKiribatiBioMarkers/.spack-env/view/bin/R",
-    "python.terminal.activateEnvInCurrentTerminal": true,
-    "r.libPaths": [
-        "/n/holylabs/cgolden_lab/Lab/frontier/works/prospectors/prospectorKiribatiBioMarkers/rv/library/4.5/x86_64/redhat8",
-        "/n/home03/ttapera/software/spack/opt/spack/linux-icelake/r-4.5.1-7hho5emqpuvlwt7hhy7i5fval54zz7mx/rlib/R/library"
-    ]
+  "livePreview.defaultPreviewPath": "/docs/index.html",
+  "positron.r.customBinaries": [
+    "/n/holylabs/cgolden_lab/Lab/frontier/works/prospectors/prospectorKiribatiBioMarkers/.spack-env/view/rlib/R/bin/R",
+    "/opt/views/view/bin/R"
+  ],
+  "positron.r.customRootFolders": [
+    "/n/home03/ttapera/.uvr/r-versions",
+    "/home/rse/.uvr/r-versions"
+  ],
+  "positron.r.interpreters.default": "/opt/views/view/bin/R",
+  "python.terminal.activateEnvInCurrentTerminal": true,
+  "r.alwaysUseActiveTerminal": true,
+  "r.bracketedPaste": true,
+  "r.libPaths": [
+    "/n/holylabs/cgolden_lab/Lab/frontier/works/prospectors/prospectorKiribatiBioMarkers/rv/library/4.5/x86_64/redhat8",
+    "/n/home03/ttapera/software/spack/opt/spack/linux-icelake/r-4.5.1-7hho5emqpuvlwt7hhy7i5fval54zz7mx/rlib/R/library"
+  ],
+  "r.plot.useHttpgd": true,
+  "r.rpath.linux": "/opt/views/view/bin/R",
+  "r.rterm.linux": "/opt/views/view/bin/R",
+  "r.sessionWatcher": true,
+  "r.workspaceViewer.showObjectSize": true,
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.profiles.linux": {
+    "bash": {
+      "path": "/bin/bash"
+    }
+  }
 }

@@ -1,0 +1,49 @@
+---
+title: "Execute Pipeline"
+execute:
+  eval: false
+engine: markdown
+---
+
+This page shows how to register the input-provenance, curation, and packaging
+notebooks in the project-root target script. The graph itself is declared, with
+its explanatory narrative, in those notebooks. Scientific execution is a
+separate, explicit container-runtime operation.
+
+::: {.manual-prereq title="Confirm The Input Boundary"}
+
+Confirm that `stagecoach_manifest.yml` exists at the repository root and that
+`data/inputs/` contains the staged files required by the Curation page.
+
+:::
+
+## Register the notebook graph
+
+In the repository-root `_targets.R` created by `targets::use_targets()`, replace
+its example targets with the following pipeline list. Only notebooks containing
+target declarations are registered.
+
+```r
+library(targets)
+library(tarchetypes)
+
+list(
+  tarchetypes::tar_tangle("notebooks/pipeline/16_page-stage-inputs.qmd"),
+  tarchetypes::tar_tangle("notebooks/pipeline/18_page-targets-curation.qmd"),
+  tarchetypes::tar_tangle("notebooks/pipeline/19_page-package-release.qmd")
+)
+```
+
+`_targets.R` is deliberately maintained at the project root, alongside the
+other project-level configuration. It is the single entry point that
+`targets::tar_make()` reads; the `pipeline/` directory holds notebooks, not a
+second targets project.
+
+```sh
+# From an adequate allocation, execute the root-level graph in the container.
+scripts/kiribati-biomarkers Rscript scripts/run-pipeline.R
+```
+
+The command is intentionally not a Quarto render hook. It fails if the
+scientific pipeline fails, and it runs with the container's Spack R runtime and
+project-local package library rather than the host environment.

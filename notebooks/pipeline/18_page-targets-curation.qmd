@@ -1,0 +1,255 @@
+---
+title: "Curate Release"
+execute:
+  eval: false
+engine: markdown
+---
+
+```{r}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+This page is the source of truth for the Kiribati biomarker release curation
+graph. Its target declarations are tangled into the DAG; it does not source an
+exported functions file. Source data remain under `data/inputs/`; only curated
+artifacts are written to `data/outputs/curated/`.
+
+## Initialize the root targets script
+
+Before building the notebook pipeline, initialize the standard targets script
+from the repository root. The following call is shown for the operator to run
+there; it is deliberately non-executable in this manual.
+
+```r
+# run this outside of the pipeline to establish targets use
+targets::use_targets()
+```
+
+This is official `{targets}` functionality, not an artifact produced by the
+Manual's `emit` profile. Confirm that `_targets.R` is available at the
+repository root before continuing. It is the project's one target script: as
+the pipeline grows, edit it to add the notebooks in `notebooks/pipeline/` that
+should participate in the pipeline. Do not create a second `_targets.R` under
+`pipeline/`.
+
+::: {.manual-prereq title="Confirm The Curation Inputs"}
+
+Stage exactly one Golden et al. `kiribati_cleandata_mergedHIES.csv` export and
+one `village_metadata` CSV containing `village`, `island`, `village_id`,
+and `rururb`. The pipeline fails rather than arbitrarily choosing among
+multiple matches.
+
+:::
+
+## Curation rules migrated from the legacy vignette
+
+The release derives age in months from interview date and date of birth, drops
+nonpositive derived ages, and replaces the source identifier with its MD5
+digest. The small release retains only approved `village_id` and `rururb`;
+it does not contain literal community or island names. Thus the approved
+metadata, rather than this pipeline, supplies the non-reversible location key (i.e., the data remains non-identifiable outside of the pipeline operator).
+
+## Simple Pipeline
+
+```{r}
+library(dplyr)
+library(stringr)
+library(readr)
+library(readxl)
+library(lubridate)
+```
+
+Our simple pipeline takes the raw data and modifies required
+column names for release. No other major curation happens here.
+
+Notably, this is separate from Manual operation —  it doesn't require
+a procedure block because it is a `targets` managed stage.
+
+First, list the biomarker columns we got from CG:
+
+```{r}
+biomarker_output_columns_vec <- c(
+  "DOB_HIES", "date_of_interview", "hhld_id_hm_basic__id", "L1_q61_hdl",
+  "ldl_corrected", "tc_corrected", "pulse_corrected", "glucose_corrected",
+  "triglycerides_corrected", "systolic_corrected", "diastolic_corrected",
+  "temperature_correctedF", "hemoglobin_corrected", "hematocrit_corrected",
+  "diabetes_corrected", "age_group", "fever", "BloodPressure_status",
+  "Glucose_status", "anemia_status", "cholesterol_status",
+  "triglycerides_status", "diabetes_status", "gender_HIES", "L1_q3_gender",
+  "L1_q125_which_community_are_you_in", "L1_q124_which_island_are_we_on"
+)
+```
+
+Then, the village columns; these are used to link the participant to
+their location and mask their identity.
+
+```{r}
+village_metadata_output_columns_vec <- c("village", "island", "village_id", "rururb")
+```
+
+
+We create a small function here to convert an identifier to a hash,
+preserving PHI.
+
+```{r}
+hash_identifier <- function(identifier) {
+  vapply(as.character(identifier), digest::digest, character(1))
+}
+```
+
+
+Here we create a mapping from the health data to human-readable labels:
+
+```{r}
+health_ptx_dictionary_labels_vec <- c(
+  uid = "De-identified record identifier", hdl = "HDL cholesterol",
+  ldl = "LDL cholesterol", tc = "Total cholesterol", pulse = "Pulse",
+  glucose = "Glucose", triglycerides = "Triglycerides",
+  systolic = "Systolic blood pressure", diastolic = "Diastolic blood pressure",
+  temperature = "Temperature in Fahrenheit", hemoglobin = "Hemoglobin level",
+  hematocrit = "Percentage of red blood cells", diabetes = "HbA1c level",
+  age_group = "Age group", fever = "Fever recorded",
+  BloodPressure_status = "Blood pressure status", Glucose_status = "Glucose status",
+  anemia_status = "Anemia status", cholesterol_status = "Cholesterol status",
+  triglycerides_status = "Triglycerides status", diabetes_status = "Diabetes status",
+  gender = "Gender", age_in_months = "Age in months at interview"
+)
+```
+
+Likewise, we create a mapping of labels for the participant data:
+```{r}
+demog_ptx_dictionary_labels_vec <- c(
+  uid = "De-identified record identifier", age_in_months = "Age in months at interview",
+  gender = "Gender", village_id = "Approved non-identifying village key",
+  rururb = "Village rural/urban classification"
+)
+```
+
+## Identify and read the approved inputs
+
+The input inventory from the staging notebook is narrowed to one approved export
+and one approved metadata file before either is read.
+
+
+```{r}
+biomarker_ptx_source_csv <- tibble(path=pipeline_raw_input_files_paths) %>%
+    filter(str_detect(path, "Goldenetal_KI_biomarkers-main/kiribati_cleandata_mergedHIES.csv"))
+
+biomarker_ptx_raw_df <- read.csv(biomarker_ptx_source_csv$path) %>%
+    tibble()
+```
+
+```{r}
+demog_ptx_village_source_csv <- tibble(path=pipeline_raw_input_files_paths) %>%
+    filter(str_detect(path, "village_metadata"))
+
+demog_ptx_village_raw_df <- read.csv(demog_ptx_village_source_csv$path) %>%
+    tibble()
+```
+
+
+## Derive age and record source-quality evidence
+
+Age derivation is separate from release shaping so the audit measures the same
+intermediate data used by both releases.
+
+```{r}
+biomarker_ptx_age_df <- biomarker_ptx_raw_df %>% 
+    mutate(
+      dob = as_date(DOB_HIES, format = "%Y-%m-%d"),
+      interview_date = as.Date(L1_q16_date_of_interview, format = "%d/%m/%Y"),
+      age_in_months = interval(dob, interview_date) / months(1)
+)
+```
+
+
+## Construct the two de-identified releases
+
+The slimmed release contains clinical measures and status fields. The small
+release joins approved non-identifying location metadata and omits literal
+community and island names.
+
+```{r}
+biomarker_clean_df <- biomarker_ptx_age_df %>%
+  filter(!is.na(age_in_months), age_in_months > 0) %>%
+  transmute(
+    uid = hash_identifier(hhld_id_hm_basic__id),
+    hdl = L1_q61_hdl, ldl = ldl_corrected,
+    tc = tc_corrected, pulse = pulse_corrected,
+    glucose = glucose_corrected,
+    triglycerides = triglycerides_corrected,
+    systolic = systolic_corrected, diastolic = diastolic_corrected,
+    temperature = temperature_correctedF,
+    hemoglobin = hemoglobin_corrected, hematocrit = hematocrit_corrected,
+    diabetes = diabetes_corrected, age_group = age_group,
+    fever = fever, BloodPressure_status = BloodPressure_status,
+    Glucose_status = Glucose_status, anemia_status = anemia_status,
+    cholesterol_status = cholesterol_status,
+    triglycerides_status = triglycerides_status,
+    diabetes_status = diabetes_status, gender = gender_HIES,
+    age_in_months
+  ) %>%
+  mutate(across(where(is.character), as.factor), uid = as.character(uid))
+```
+
+```{r}
+demog_clean_df <- biomarker_ptx_age_df %>%
+  filter(!is.na(age_in_months), age_in_months > 0) %>%
+  transmute(
+    uid = hash_identifier(hhld_id_hm_basic__id), age_in_months,
+    gender = L1_q3_gender,
+    community = L1_q125_which_community_are_you_in,
+    island = L1_q124_which_island_are_we_on
+  ) %>%
+  left_join(
+    select(demog_ptx_village_raw_df, village, island, village_id, rururb),
+    by = c("community" = "village", "island" = "island")
+  ) %>%
+  select(uid, age_in_months, gender, village_id, rururb) %>%
+  mutate(across(where(is.character), as.factor), uid = as.character(uid))
+```
+
+## Write release artifacts and data dictionaries
+
+All externally consumed outputs are file targets with stable filenames.
+
+```{r}
+#| format: file
+#slimmed_data_csv <- write_csv(
+#  slimmed_data, file.path("data", "outputs", "curated", "slimmed_data.csv")
+#)
+```
+
+```{r}
+#| format: file
+#small_data_csv <- write_csv(
+#  small_data, file.path("data", "outputs", "curated", "small_data.csv")
+#)
+```
+
+```{r}
+#| format: file
+#slimmed_data_dictionary_csv <- write_dictionary(
+#  slimmed_data, slimmed_dictionary_labels,
+#  file.path("data", "outputs", "curated", "data_dictionary_slimmed_data.csv")
+#)
+```
+
+```{r}
+#| format: file
+#small_data_dictionary_csv <- write_dictionary(
+#  small_data, small_dictionary_labels,
+#  file.path("data", "outputs", "curated", "data_dictionary_small_data.csv")
+#)
+```
+
+```{r}
+#| format: file
+#curation_audit_csv <- write_csv(
+#  curation_audit_table,
+#  file.path("data", "outputs", "curated", "curation_audit.csv")
+#)
+```
+
+Render with the `emit` profile to materialize the compact orchestrator. Render
+with the `pipeline` profile only after reviewing the staged inputs and rules.

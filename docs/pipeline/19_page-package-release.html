@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>15&nbsp; Package Release – Kiribati Biomarkers Curation Manual</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../pipeline/20_page-execute-pipeline.html" rel="next">
+<link href="../pipeline/18_page-targets-curation.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-2ee6e6ccb0d235fc4ff556a26be92d1b.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../pipeline/16_page-stage-inputs.html">Pipeline</a></li><li class="breadcrumb-item"><a href="../pipeline/19_page-package-release.html"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Package Release</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Kiribati Biomarkers Curation Manual</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Search"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Kiribati Biomarkers Curation Manual</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Project Setup</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../00_cover.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Kiribati BioMarkers Pipeline Operator’s Manual</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../01_misc-render-isolated.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Render In Isolation</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../02_misc-project-contract.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Project Contract</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../03_misc-data-governance.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Data Governance</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true">
+ <span class="menu-text">Infrastructure</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-2" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../infrastructure/10_page-direnv.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Local Operator Environment</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../infrastructure/11_page-spack.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Bootstrap the Spack Builder</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../infrastructure/12_page-jinja.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Declare the Native Runtime</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../infrastructure/13_page-jinja-build.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Customize and Build the Runtime</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../infrastructure/14_page-uvr.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">10</span>&nbsp; <span class="chapter-title">Lock and Synchronize R Packages</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../infrastructure/15_page-runner.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">11</span>&nbsp; <span class="chapter-title">Run the Project Environment</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true">
+ <span class="menu-text">Pipeline</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-3" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pipeline/16_page-stage-inputs.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">12</span>&nbsp; <span class="chapter-title">Stage Inputs</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pipeline/17_page-inspect-source-data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">13</span>&nbsp; <span class="chapter-title">Inspect Source Data</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pipeline/18_page-targets-curation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Curate Release</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pipeline/19_page-package-release.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Package Release</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pipeline/20_page-execute-pipeline.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Execute Pipeline</span></span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../pipeline/21_page-verify-release.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">17</span>&nbsp; <span class="chapter-title">Verify Release</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#describe-the-biomarker-resource" id="toc-describe-the-biomarker-resource" class="nav-link active" data-scroll-target="#describe-the-biomarker-resource"><span class="header-section-number">15.1</span> <em>Describe the biomarker resource</em></a></li>
+  <li><a href="#describe-the-demographic-resource" id="toc-describe-the-demographic-resource" class="nav-link" data-scroll-target="#describe-the-demographic-resource"><span class="header-section-number">15.2</span> <em>Describe the demographic resource</em></a></li>
+  <li><a href="#assemble-the-data-package" id="toc-assemble-the-data-package" class="nav-link" data-scroll-target="#assemble-the-data-package"><span class="header-section-number">15.3</span> <em>Assemble the data package</em></a></li>
+  <li><a href="#publish-the-immutable-release" id="toc-publish-the-immutable-release" class="nav-link" data-scroll-target="#publish-the-immutable-release"><span class="header-section-number">15.4</span> <em>Publish the immutable release</em></a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../pipeline/16_page-stage-inputs.html">Pipeline</a></li><li class="breadcrumb-item"><a href="../pipeline/19_page-package-release.html"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Package Release</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">15</span>&nbsp; <span class="chapter-title">Package Release</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode numberSource {r} number-lines code-with-copy"><code class="sourceCode"><span id="cb1-1"><a href="#cb1-1"></a>knitr::opts_chunk$set(eval = FALSE)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>This page is the source of truth for release serialization. It turns the two curated participant-grain targets into a single Frictionless Data Package. The package descriptor carries the data dictionaries as field descriptions, so the release does not require separately maintained dictionary CSV files.</p>
+<section id="describe-the-biomarker-resource" class="level2" data-number="15.1">
+<h2 data-number="15.1" class="anchored" data-anchor-id="describe-the-biomarker-resource"><span class="header-section-number">15.1</span> <em>Describe the biomarker resource</em></h2>
+<p><code>create_schema()</code> infers field types and factor enumerations. This target adds the release-specific descriptions and fails if the description set and curated columns diverge.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode numberSource {r} number-lines code-with-copy"><code class="sourceCode"><span id="cb2-1"><a href="#cb2-1"></a>biomarker_ptx_dictionary_field_described_list &lt;- {</span>
+<span id="cb2-2"><a href="#cb2-2"></a>  biomarker_description_chr &lt;- c(</span>
+<span id="cb2-3"><a href="#cb2-3"></a>    uid = "De-identified record identifier",</span>
+<span id="cb2-4"><a href="#cb2-4"></a>    hdl = "HDL cholesterol",</span>
+<span id="cb2-5"><a href="#cb2-5"></a>    ldl = "LDL cholesterol",</span>
+<span id="cb2-6"><a href="#cb2-6"></a>    tc = "Total cholesterol",</span>
+<span id="cb2-7"><a href="#cb2-7"></a>    pulse = "Pulse",</span>
+<span id="cb2-8"><a href="#cb2-8"></a>    glucose = "Glucose",</span>
+<span id="cb2-9"><a href="#cb2-9"></a>    triglycerides = "Triglycerides",</span>
+<span id="cb2-10"><a href="#cb2-10"></a>    systolic = "Systolic blood pressure",</span>
+<span id="cb2-11"><a href="#cb2-11"></a>    diastolic = "Diastolic blood pressure",</span>
+<span id="cb2-12"><a href="#cb2-12"></a>    temperature = "Temperature in Fahrenheit",</span>
+<span id="cb2-13"><a href="#cb2-13"></a>    hemoglobin = "Hemoglobin level",</span>
+<span id="cb2-14"><a href="#cb2-14"></a>    hematocrit = "Percentage of red blood cells",</span>
+<span id="cb2-15"><a href="#cb2-15"></a>    diabetes = "HbA1c level",</span>
+<span id="cb2-16"><a href="#cb2-16"></a>    age_group = "Age group",</span>
+<span id="cb2-17"><a href="#cb2-17"></a>    fever = "Fever recorded",</span>
+<span id="cb2-18"><a href="#cb2-18"></a>    BloodPressure_status = "Blood pressure status",</span>
+<span id="cb2-19"><a href="#cb2-19"></a>    Glucose_status = "Glucose status",</span>
+<span id="cb2-20"><a href="#cb2-20"></a>    anemia_status = "Anemia status",</span>
+<span id="cb2-21"><a href="#cb2-21"></a>    cholesterol_status = "Cholesterol status",</span>
+<span id="cb2-22"><a href="#cb2-22"></a>    triglycerides_status = "Triglycerides status",</span>
+<span id="cb2-23"><a href="#cb2-23"></a>    diabetes_status = "Diabetes status",</span>
+<span id="cb2-24"><a href="#cb2-24"></a>    gender = "Gender",</span>
+<span id="cb2-25"><a href="#cb2-25"></a>    age_in_months = "Age in months at interview"</span>
+<span id="cb2-26"><a href="#cb2-26"></a>  )</span>
+<span id="cb2-27"><a href="#cb2-27"></a>  biomarker_schema_list &lt;- frictionless::create_schema(</span>
+<span id="cb2-28"><a href="#cb2-28"></a>    biomarker_clean_df</span>
+<span id="cb2-29"><a href="#cb2-29"></a>  )</span>
+<span id="cb2-30"><a href="#cb2-30"></a>  biomarker_field_name_chr &lt;- vapply(</span>
+<span id="cb2-31"><a href="#cb2-31"></a>    biomarker_schema_list$fields,</span>
+<span id="cb2-32"><a href="#cb2-32"></a>    `[[`,</span>
+<span id="cb2-33"><a href="#cb2-33"></a>    character(1),</span>
+<span id="cb2-34"><a href="#cb2-34"></a>    "name"</span>
+<span id="cb2-35"><a href="#cb2-35"></a>  )</span>
+<span id="cb2-36"><a href="#cb2-36"></a>  if (!setequal(names(biomarker_description_chr), biomarker_field_name_chr)) {</span>
+<span id="cb2-37"><a href="#cb2-37"></a>    stop("Biomarker field descriptions do not match the curated columns.")</span>
+<span id="cb2-38"><a href="#cb2-38"></a>  }</span>
+<span id="cb2-39"><a href="#cb2-39"></a>  biomarker_schema_list$fields &lt;- lapply(</span>
+<span id="cb2-40"><a href="#cb2-40"></a>    biomarker_schema_list$fields,</span>
+<span id="cb2-41"><a href="#cb2-41"></a>    function(field_list) {</span>
+<span id="cb2-42"><a href="#cb2-42"></a>      field_list$description &lt;- unname(</span>
+<span id="cb2-43"><a href="#cb2-43"></a>        biomarker_description_chr[[field_list$name]]</span>
+<span id="cb2-44"><a href="#cb2-44"></a>      )</span>
+<span id="cb2-45"><a href="#cb2-45"></a>      field_list</span>
+<span id="cb2-46"><a href="#cb2-46"></a>    }</span>
+<span id="cb2-47"><a href="#cb2-47"></a>  )</span>
+<span id="cb2-48"><a href="#cb2-48"></a></span>
+<span id="cb2-49"><a href="#cb2-49"></a>  biomarker_schema_list</span>
+<span id="cb2-50"><a href="#cb2-50"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="describe-the-demographic-resource" class="level2" data-number="15.2">
+<h2 data-number="15.2" class="anchored" data-anchor-id="describe-the-demographic-resource"><span class="header-section-number">15.2</span> <em>Describe the demographic resource</em></h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource {r} number-lines code-with-copy"><code class="sourceCode"><span id="cb3-1"><a href="#cb3-1"></a>demog_ptx_dictionary_field_described_list &lt;- {</span>
+<span id="cb3-2"><a href="#cb3-2"></a>  demog_description_chr &lt;- c(</span>
+<span id="cb3-3"><a href="#cb3-3"></a>    uid = "De-identified record identifier",</span>
+<span id="cb3-4"><a href="#cb3-4"></a>    age_in_months = "Age in months at interview",</span>
+<span id="cb3-5"><a href="#cb3-5"></a>    gender = "Gender",</span>
+<span id="cb3-6"><a href="#cb3-6"></a>    village_id = "Approved non-identifying village key",</span>
+<span id="cb3-7"><a href="#cb3-7"></a>    rururb = "Village rural/urban classification"</span>
+<span id="cb3-8"><a href="#cb3-8"></a>  )</span>
+<span id="cb3-9"><a href="#cb3-9"></a>  demog_schema_list &lt;- frictionless::create_schema(</span>
+<span id="cb3-10"><a href="#cb3-10"></a>    demog_clean_df</span>
+<span id="cb3-11"><a href="#cb3-11"></a>  )</span>
+<span id="cb3-12"><a href="#cb3-12"></a>  demog_field_name_chr &lt;- vapply(</span>
+<span id="cb3-13"><a href="#cb3-13"></a>    demog_schema_list$fields,</span>
+<span id="cb3-14"><a href="#cb3-14"></a>    `[[`,</span>
+<span id="cb3-15"><a href="#cb3-15"></a>    character(1),</span>
+<span id="cb3-16"><a href="#cb3-16"></a>    "name"</span>
+<span id="cb3-17"><a href="#cb3-17"></a>  )</span>
+<span id="cb3-18"><a href="#cb3-18"></a>  if (!setequal(names(demog_description_chr), demog_field_name_chr)) {</span>
+<span id="cb3-19"><a href="#cb3-19"></a>    stop("Demographic field descriptions do not match the curated columns.")</span>
+<span id="cb3-20"><a href="#cb3-20"></a>  }</span>
+<span id="cb3-21"><a href="#cb3-21"></a>  demog_schema_list$fields &lt;- lapply(</span>
+<span id="cb3-22"><a href="#cb3-22"></a>    demog_schema_list$fields,</span>
+<span id="cb3-23"><a href="#cb3-23"></a>    function(field_list) {</span>
+<span id="cb3-24"><a href="#cb3-24"></a>      field_list$description &lt;- unname(demog_description_chr[[field_list$name]])</span>
+<span id="cb3-25"><a href="#cb3-25"></a>      field_list</span>
+<span id="cb3-26"><a href="#cb3-26"></a>    }</span>
+<span id="cb3-27"><a href="#cb3-27"></a>  )</span>
+<span id="cb3-28"><a href="#cb3-28"></a></span>
+<span id="cb3-29"><a href="#cb3-29"></a>  demog_schema_list</span>
+<span id="cb3-30"><a href="#cb3-30"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="assemble-the-data-package" class="level2" data-number="15.3">
+<h2 data-number="15.3" class="anchored" data-anchor-id="assemble-the-data-package"><span class="header-section-number">15.3</span> <em>Assemble the data package</em></h2>
+<p>The resource names are also the stable CSV basenames written by <code>write_package()</code>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource {r} number-lines code-with-copy"><code class="sourceCode"><span id="cb4-1"><a href="#cb4-1"></a>release_kiribati_data_resource_packaged_list &lt;-</span>
+<span id="cb4-2"><a href="#cb4-2"></a>  frictionless::create_package(</span>
+<span id="cb4-3"><a href="#cb4-3"></a>    list(</span>
+<span id="cb4-4"><a href="#cb4-4"></a>      name = "kiribati-biomarkers",</span>
+<span id="cb4-5"><a href="#cb4-5"></a>      title = "Kiribati Biomarkers",</span>
+<span id="cb4-6"><a href="#cb4-6"></a>      description = paste(</span>
+<span id="cb4-7"><a href="#cb4-7"></a>        "De-identified participant biomarker and demographic resources",</span>
+<span id="cb4-8"><a href="#cb4-8"></a>        "for the Kiribati Biomarkers v0.1.0 release."</span>
+<span id="cb4-9"><a href="#cb4-9"></a>      ),</span>
+<span id="cb4-10"><a href="#cb4-10"></a>      version = "0.1.0",</span>
+<span id="cb4-11"><a href="#cb4-11"></a>      resources = list()</span>
+<span id="cb4-12"><a href="#cb4-12"></a>    )</span>
+<span id="cb4-13"><a href="#cb4-13"></a>  ) |&gt;</span>
+<span id="cb4-14"><a href="#cb4-14"></a>  frictionless::add_resource(</span>
+<span id="cb4-15"><a href="#cb4-15"></a>    resource_name = "biomarker_ptx",</span>
+<span id="cb4-16"><a href="#cb4-16"></a>    data = biomarker_clean_df,</span>
+<span id="cb4-17"><a href="#cb4-17"></a>    schema = biomarker_ptx_dictionary_field_described_list,</span>
+<span id="cb4-18"><a href="#cb4-18"></a>    title = "Participant biomarker data"</span>
+<span id="cb4-19"><a href="#cb4-19"></a>  ) |&gt;</span>
+<span id="cb4-20"><a href="#cb4-20"></a>  frictionless::add_resource(</span>
+<span id="cb4-21"><a href="#cb4-21"></a>    resource_name = "demog_ptx",</span>
+<span id="cb4-22"><a href="#cb4-22"></a>    data = demog_clean_df,</span>
+<span id="cb4-23"><a href="#cb4-23"></a>    schema = demog_ptx_dictionary_field_described_list,</span>
+<span id="cb4-24"><a href="#cb4-24"></a>    title = "De-identified participant demographic data"</span>
+<span id="cb4-25"><a href="#cb4-25"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="publish-the-immutable-release" class="level2" data-number="15.4">
+<h2 data-number="15.4" class="anchored" data-anchor-id="publish-the-immutable-release"><span class="header-section-number">15.4</span> <em>Publish the immutable release</em></h2>
+<p>Versioned releases are immutable. This target refuses to write into a nonempty version directory, which prevents <code>write_package()</code> from retaining stale CSVs. Changed release content requires a new version directory.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource {r} number-lines code-with-copy"><code class="sourceCode"><span id="cb5-1"><a href="#cb5-1"></a>#| format: file</span>
+<span id="cb5-2"><a href="#cb5-2"></a>release_kiribati_data_file_published_chr &lt;- {</span>
+<span id="cb5-3"><a href="#cb5-3"></a>  release_output_directory_chr &lt;- here::here(</span>
+<span id="cb5-4"><a href="#cb5-4"></a>    "data",</span>
+<span id="cb5-5"><a href="#cb5-5"></a>    "outputs",</span>
+<span id="cb5-6"><a href="#cb5-6"></a>    "releases",</span>
+<span id="cb5-7"><a href="#cb5-7"></a>    "v0.1.0"</span>
+<span id="cb5-8"><a href="#cb5-8"></a>  )</span>
+<span id="cb5-9"><a href="#cb5-9"></a>  release_expected_file_chr &lt;- file.path(</span>
+<span id="cb5-10"><a href="#cb5-10"></a>    release_output_directory_chr,</span>
+<span id="cb5-11"><a href="#cb5-11"></a>    c("datapackage.json", "biomarker_ptx.csv", "demog_ptx.csv")</span>
+<span id="cb5-12"><a href="#cb5-12"></a>  )</span>
+<span id="cb5-13"><a href="#cb5-13"></a></span>
+<span id="cb5-14"><a href="#cb5-14"></a>  if (</span>
+<span id="cb5-15"><a href="#cb5-15"></a>    dir.exists(release_output_directory_chr) &amp;&amp;</span>
+<span id="cb5-16"><a href="#cb5-16"></a>      length(</span>
+<span id="cb5-17"><a href="#cb5-17"></a>        list.files(</span>
+<span id="cb5-18"><a href="#cb5-18"></a>          release_output_directory_chr,</span>
+<span id="cb5-19"><a href="#cb5-19"></a>          all.files = TRUE,</span>
+<span id="cb5-20"><a href="#cb5-20"></a>          no.. = TRUE</span>
+<span id="cb5-21"><a href="#cb5-21"></a>        )</span>
+<span id="cb5-22"><a href="#cb5-22"></a>      )</span>
+<span id="cb5-23"><a href="#cb5-23"></a>  ) {</span>
+<span id="cb5-24"><a href="#cb5-24"></a>    stop(</span>
+<span id="cb5-25"><a href="#cb5-25"></a>      "Release directory is nonempty and versioned releases are immutable: ",</span>
+<span id="cb5-26"><a href="#cb5-26"></a>      release_output_directory_chr</span>
+<span id="cb5-27"><a href="#cb5-27"></a>    )</span>
+<span id="cb5-28"><a href="#cb5-28"></a>  }</span>
+<span id="cb5-29"><a href="#cb5-29"></a></span>
+<span id="cb5-30"><a href="#cb5-30"></a>  dir.create(</span>
+<span id="cb5-31"><a href="#cb5-31"></a>    release_output_directory_chr,</span>
+<span id="cb5-32"><a href="#cb5-32"></a>    recursive = TRUE,</span>
+<span id="cb5-33"><a href="#cb5-33"></a>    showWarnings = FALSE</span>
+<span id="cb5-34"><a href="#cb5-34"></a>  )</span>
+<span id="cb5-35"><a href="#cb5-35"></a>  frictionless::write_package(</span>
+<span id="cb5-36"><a href="#cb5-36"></a>    release_kiribati_data_resource_packaged_list,</span>
+<span id="cb5-37"><a href="#cb5-37"></a>    directory = release_output_directory_chr</span>
+<span id="cb5-38"><a href="#cb5-38"></a>  )</span>
+<span id="cb5-39"><a href="#cb5-39"></a></span>
+<span id="cb5-40"><a href="#cb5-40"></a>  release_missing_file_chr &lt;- release_expected_file_chr[</span>
+<span id="cb5-41"><a href="#cb5-41"></a>    !file.exists(release_expected_file_chr)</span>
+<span id="cb5-42"><a href="#cb5-42"></a>  ]</span>
+<span id="cb5-43"><a href="#cb5-43"></a>  if (length(release_missing_file_chr)) {</span>
+<span id="cb5-44"><a href="#cb5-44"></a>    stop(</span>
+<span id="cb5-45"><a href="#cb5-45"></a>      "Frictionless did not write the expected release files: ",</span>
+<span id="cb5-46"><a href="#cb5-46"></a>      paste(release_missing_file_chr, collapse = ", ")</span>
+<span id="cb5-47"><a href="#cb5-47"></a>    )</span>
+<span id="cb5-48"><a href="#cb5-48"></a>  }</span>
+<span id="cb5-49"><a href="#cb5-49"></a></span>
+<span id="cb5-50"><a href="#cb5-50"></a>  release_expected_file_chr</span>
+<span id="cb5-51"><a href="#cb5-51"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../pipeline/18_page-targets-curation.html" class="pagination-link" aria-label="Curate Release">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">14</span>&nbsp; <span class="chapter-title">Curate Release</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../pipeline/20_page-execute-pipeline.html" class="pagination-link" aria-label="Execute Pipeline">
+        <span class="nav-page-text"><span class="chapter-number">16</span>&nbsp; <span class="chapter-title">Execute Pipeline</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,1486 @@
+---
+title: "Inspect Source Data"
+execute:
+  eval: false
+engine: markdown
+---
+
+In this stage of the pipeline, we need to identify and fix NAs eminating from the source
+data that was merged with HIES and Dharma data upstream. From JZM email:
+
+> Presumably something with nas due to village or gender?  
+> Dharma had nas in several of these and, where possible, I think we populated with hies data (I think village and community may be the same thing)
+> However, there may still be nas if the original dharma didn’t have them! 
+> To check if the underlying issue was already in the data you probably have to go to the level 0 and level 1 excel spreadsheets you shared with me originally
+
+The following is what I believe to be the corresponding code of those changes.
+What I think would be a good next strategy is to identify each of the CSVs/XLSX
+files and ensure they're available.
+
+- `kiri_data<-read.csv(file="kiribati_cleandata_mergedHIES.csv",header=T)`: ✅
+- `HIES_demo<-read.csv("HIES_demo.csv")` ✅
+- `HIES_HHid<-read.csv("2021-08-30_hies_tidy_household-level.csv")` ❌
+- `HIES_personid<-read.csv("2021-08-30_hies_tidy_individual-level.csv")` ❌
+- `island_samples<-read.csv("pop_size_islands.CSV")` ❌
+- `book <- read_excel("/Users/heatherkelahan/Desktop/Kiribati/Book1.xlsx")` ❌
+
+The available files are in the existing Goldenetal repo; I haven't found any of the
+others in our available Google Drive. If this code is indeed the correct one to repair the NAs, I'll need the
+4 missing files to run it from top to tail.
+
+I also asked myself if I won't need the full set of files, and maybe the merge gets
+written out before needing `island_samples` etc.; what I found is that this script
+actually has no record of `write.csv` or related writers.
+
+So, I also looked into the folder `Health data cleaning, exploration and merging to HIES`
+and found similar mentions of HIES in a notebook, but this folder notably has no input
+files, but a folder labelled `cleaned data`, which seems counterfactual to our
+investigation. That being said, it does have the following files:
+
+- `kiribati_data_final_level0.csv` ✅ (available but not clear where they came from)
+- `kiribati_data_final_level1.csv` ✅ 
+
+The fact that they're in `cleaned` but used as input to a cleaning script elsewhere
+makes me suspicious that this is a circular dataset (it overwrites itself).
+This is particularly important as they are used as inputs to the file
+`Kiribati_merging_HEIS_Dharma.Rmd`. The question, then is, how did level0 and level1
+materialize without a write.csv anywhere?
+
+I believe those files are the ones JZM is referring to in her correspondance.
+
+----------
+
+```r
+
+# Analyses for Golden et al. 2024: Prevalence and spatio-demographic variability of nutrition-related health issues in Kiribati
+# Code: Jessica Zamborain Mason 
+
+#clear R
+rm(list=ls())
+
+
+#load required packages
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+library(ggpubr)
+library(ggridges)
+library(knitr)
+library(brms)
+library(rstan)
+library(plyr)
+library(tidyverse)
+library(anthro)
+
+
+#make rstan work with all cores
+rstan_options(auto_write = T)
+
+If this code is indeed the correct one to repair the NAs, I'll need the
+4 missing files to run it from top to tail.
+options(mc.cores = parallel::detectCores())
+
+#upload Dharma cleaned data
+kiri_data<-read.csv(file="kiribati_cleandata_mergedHIES.csv",header=T)
+
+#estimate age correctly
+kiri_data<-tidyr::separate(kiri_data,L1_q16_date_of_interview,into=c("date_of_interview_corrected","time_interview"),sep=" ")
+kiri_data<-tidyr::separate(kiri_data,L1_q1_dob,into=c("dob_corrected","time_ondob"),sep=" ")
+kiri_data<-tidyr::separate(kiri_data,DOB_HIES,into=c("DOB_year","DOB_month","DOB_day"),sep="-")
+kiri_data$DOB_HIES<-paste(kiri_data$DOB_day,kiri_data$DOB_month,kiri_data$DOB_year,sep="/")
+kiri_data$DOB_HIES<-ifelse(kiri_data$DOB_HIES=="NA/NA/NA",NA,kiri_data$DOB_HIES)
+kiri_data$dob_corrected<-ifelse(kiri_data$dob_corrected=="",kiri_data$DOB_HIES,kiri_data$dob_corrected)
+kiri_data$agedays_corrected<-as.numeric(difftime(as.Date(kiri_data$date_of_interview_corrected, tryFormats = c("%d/%m/%Y")),as.Date(kiri_data$dob_corrected, tryFormats = c("%d/%m/%Y")),units = c("days")))
+#delete those with negative ages
+kiri_data$agedays_corrected<-ifelse(!is.na(kiri_data$agedays_corrected)&kiri_data$agedays_corrected<0,NA,kiri_data$agedays_corrected)
+kiri_data$agemonths_corrected<-kiri_data$agedays_corrected/30.4167
+kiri_data$ageyears_corrected<-kiri_data$agemonths_corrected/12
+
+#correct those without community using HIES demographics
+HIES_demo<-read.csv("HIES_demo.csv")
+HIES_demo$hhld_id_hm_basic__id<-paste(HIES_demo$hhld_id,HIES_demo$hm_basic__id,sep="::" )
+HIES_demo$island_HIES<-HIES_demo$island
+HIES_demo$village_HIES<-HIES_demo$village
+kiri_data<-merge(kiri_data,HIES_demo[,c("island_HIES","village_HIES","hhld_id_hm_basic__id")],by="hhld_id_hm_basic__id",all.x=T)
+kiri_data$island_corrected<-ifelse(kiri_data$L1_q124_which_island_are_we_on =="",kiri_data$island_HIES,kiri_data$L1_q124_which_island_are_we_on)
+kiri_data$community_corrected<-ifelse(kiri_data$L1_q125_which_community_are_you_in =="",kiri_data$village_HIES,kiri_data$L1_q125_which_community_are_you_in )
+
+#correct some names based on email with Chris
+kiri_data$village_HIES[kiri_data$community_corrected=="Bairiki"]
+kiri_data$community_corrected<-ifelse(kiri_data$community_corrected=="Bairiki",kiri_data$village_HIES,kiri_data$community_corrected)
+kiri_data$island_corrected<-ifelse(kiri_data$island_corrected=="South Tabiteuea","Tabiteuea South",kiri_data$island_corrected)
+
+
+#classify dharma biomaker data
+#BIG NOTE: ORDER MATTERS WHEN USING CASE-WHEN (OR IFELSE) so stat always with the most stringent!!!
+kiri_data_clean<-kiri_data%>%
+  mutate(
+  # Calculate age groups
+   age_group = case_when(
+      (is.na(ageyears_corrected)|ageyears_corrected=="") ~ "NA",
+      (ageyears_corrected > 40) ~ "over 40",
+      (ageyears_corrected > 20 & ageyears_corrected <= 40) ~ "20-40",
+      (ageyears_corrected > 12 & ageyears_corrected <= 20) ~ "12-20",
+      (ageyears_corrected <= 12) ~ "under 12"),
+   
+  # calculate fever  
+   fever=case_when(
+     (is.na(temperature_correctedF )|temperature_correctedF=="") ~ "NA",
+     (temperature_correctedF < 100.4)~ "N",
+     (temperature_correctedF >= 100.4)~ "Y"),
+  
+  #calculate blood pressure
+    # - Normal: Less than 120/80 mm Hg;
+    # - Elevated: Systolic between 120-129 and diastolic less than 80;
+    # - Stage 1: Systolic between 130-139 or diastolic between 80-89;
+    # - Stage 2: Systolic at least 140 or diastolic at least 90 mm Hg;
+    # - Hypertensive crisis: Systolic over 180 and/or diastolic over 120
+   BloodPressure_status = case_when(
+      (is.na(systolic_corrected)|systolic_corrected==""| is.na(diastolic_corrected)|diastolic_corrected=="") ~ "NA",
+      (systolic_corrected >= 180 | diastolic_corrected >= 120) ~ "Hypertensive Crisis",
+      ((systolic_corrected >= 140 & systolic_corrected< 180) |
+         (diastolic_corrected >= 90 & diastolic_corrected < 120)) ~ "Stage 2",
+      ((systolic_corrected >= 130 & systolic_corrected < 140) | 
+         (diastolic_corrected >= 80 & diastolic_corrected < 90)) ~ "Stage 1",
+      (systolic_corrected >= 120 &systolic_corrected < 130 & diastolic_corrected <= 80) ~ "Elevated",
+      (systolic_corrected< 120 & diastolic_corrected < 80) ~ "Normal"),
+  
+   #calculate glucose
+    Glucose_status = case_when(
+      (is.na(ageyears_corrected)|glucose_corrected=="") ~ "NA",
+       ageyears_corrected < 12 ~ "Age under 12",
+      (ageyears_corrected >= 12 & glucose_corrected >= 180) ~ "Hyperglycemic",
+      (ageyears_corrected >= 12 & glucose_corrected > 70 & glucose_corrected < 180) ~ "Normal",
+      (ageyears_corrected>= 12 & glucose_corrected <= 70) ~ "Hypoglycemic"),
+  
+  
+   # Calculate cholesterol
+    # The following levels are considered to be "good" in healthy people:
+    # -	Total cholesterol: Levels below 200 mg/dL (5.2 mmol/L)
+    # -	LDL cholesterol: Levels below 130 mg/dL (3.4 mmol/L)
+    # -	HDL cholesterol: Levels above 40 mg/dL (1 mmol/L) in men and above 50 mg/dL (1.3 mmol/L) in women
+    # If above the TC or LDL, or below in the HDL, then please indicate cholesterol risk.
+   cholesterol_status = case_when(
+      (is.na(ageyears_corrected)|ageyears_corrected==""|(is.na(tc_corrected)&is.na(L1_q61_hdl)&is.na(ldl_corrected))|(tc_corrected==""&L1_q61_hdl==""&ldl_corrected==""))~ "NA",
+      ageyears_corrected < (12) ~ "Age under 12",
+      (ageyears_corrected >= (12) & (tc_corrected >= 200 | L1_q61_hdl <= 40 | ldl_corrected >= 130)) ~ "At risk", 
+      (ageyears_corrected >= (12) & (tc_corrected < 200 & L1_q61_hdl > 40 & ldl_corrected < 130)) ~ "Normal"),
+  
+   # Calculate triglycerides
+    # Categorize triglyceride levels based on the following:
+    # (1) low-normal triglycerides (<100 mg/dL); 
+    # (2) high-normal triglycerides (100-149 mg/dL); 
+    # (3) borderline hypertriglyceridemia triglycerides (150-199 mg/dL); 
+    # (4) moderate hypertriglyceridemia triglycerides (200-499 mg/dL); 
+    # (5) severe hypertriglyceridemia triglycerides (500 mg/dL)
+    triglycerides_status = case_when(
+       (ageyears_corrected==""|is.na(ageyears_corrected)|is.na(triglycerides_corrected )|triglycerides_corrected =="") ~ "NA",
+      ageyears_corrected < (12) ~ "Age under 12",
+      (ageyears_corrected >= (12) & triglycerides_corrected >= 500) ~ "Severe hypertriglyceridemia",
+      (ageyears_corrected >= (12) & triglycerides_corrected >= 200 & triglycerides_corrected < 500) ~ "Moderate hypertriglyceridemia",
+      (ageyears_corrected >= (12) & triglycerides_corrected >= 150 & triglycerides_corrected < 200) ~ "Borderline hypertriglyceridemia",
+      (ageyears_corrected >= (12) & triglycerides_corrected >= 100 & triglycerides_corrected < 150) ~ "High-normal",
+      (ageyears_corrected >= (12) & triglycerides_corrected < 100) ~ "Low-normal"),
+    
+    # Calculate diabetes
+    # For people without diabetes, the normal range for the hemoglobin A1c level is between 4% and 5.6%. 
+    # Hemoglobin A1c levels between 5.7% and 6.4% mean you have a higher chance of getting diabetes. 
+    # Levels of 6.5% or higher mean you have diabetes. Please categorize as such. 
+    diabetes_status = case_when(
+       (ageyears_corrected==""|is.na(ageyears_corrected)|is.na(triglycerides_corrected )|triglycerides_corrected =="") ~ "NA",
+      ageyears_corrected < (12) ~ "Age under 12",
+      (ageyears_corrected >= (12) & diabetes_corrected >= 6.5) ~ "Diabetic",
+      (ageyears_corrected >= (12) & diabetes_corrected >= 5.7 & diabetes_corrected < 6.5) ~ "At risk",
+      (ageyears_corrected >= (12) & diabetes_corrected < 5.7) ~ "Normal"))
+
+#now clean and ordered data
+  kiri_data_clean$age_group <- ordered(as.factor(kiri_data_clean$age_group), levels = c("under 12", "12-20", "20-40", "over 40","NA"))
+   kiri_data_clean$fever <- as.factor(kiri_data_clean$fever)
+  kiri_data_clean$BloodPressure_status <- ifelse(is.na(kiri_data_clean$BloodPressure_status),"NA",kiri_data_clean$BloodPressure_status)
+  kiri_data_clean$BloodPressure_status <- ordered(as.factor(kiri_data_clean$BloodPressure_status), levels = c(
+    "Normal", "Elevated", "Stage 1", "Stage 2", "Hypertensive Crisis","NA"))
+  
+  kiri_data_clean$Glucose_status <- as.factor(kiri_data_clean$Glucose_status)
+  kiri_data_clean$Glucose_status <- ordered(as.factor(kiri_data_clean$Glucose_status), levels = c(
+    "Hypoglycemic","Normal",  "Hyperglycemic", " Age under 12", "NA"))
+
+  kiri_data_clean$anemia_status <- ordered(as.factor(kiri_data_clean$anemia_status), levels = c(
+    "non-anemic", "mild", "moderate", "severe", "Age over 50","NA"))
+  
+  kiri_data_clean$cholesterol_status <- ordered(as.factor(kiri_data_clean$cholesterol_status), levels = c(
+    "Normal", "At risk", "Age under 12","NA"))
+  
+  kiri_data_clean$triglycerides_status <- ordered(as.factor(kiri_data_clean$triglycerides_status), levels = c(
+    "Low-normal", "High-normal", "Borderline hypertriglyceridemia", 
+    "Moderate hypertriglyceridemia", "Severe hypertriglyceridemia" , "Age under 12","NA"))
+
+  kiri_data_clean$diabetes_status <- ordered(as.factor(kiri_data_clean$diabetes_status), levels = c(
+    "Normal", "At risk", "Diabetic", "Age under 12","NA"))
+
+  
+#check why stage 1 has categories of systolic >140  
+summary(kiri_data_clean$systolic_corrected[kiri_data_clean$BloodPressure_status=="Stage 1"])
+
+ 
+#create a unique identifier for communities
+kiri_data_clean$community_island<-paste(kiri_data_clean$community_corrected,kiri_data_clean$island_corrected,sep="::")
+
+windows()
+ggarrange(ggplot(kiri_data_clean,aes(y=triglycerides_corrected, x=gender_corrected))+geom_boxplot(aes(fill=gender_corrected)),
+ggplot(kiri_data_clean,aes(y=ldl_corrected, x=gender_corrected))+geom_boxplot(aes(fill=gender_corrected)),
+ggplot(kiri_data_clean,aes(y=L1_q61_hdl, x=gender_corrected))+geom_boxplot(aes(fill=gender_corrected)),
+ggplot(kiri_data_clean,aes(y=tc_corrected, x=gender_corrected))+geom_boxplot(aes(fill=gender_corrected)))
+
+#do the same for HIES
+HIES_demo$island2<-ifelse(HIES_demo$island=="North Tabiteuea","Tabiteuea North",HIES_demo$island)
+HIES_demo$community_island<-paste(HIES_demo$village,HIES_demo$island2,sep="::")
+HIES_demo$hhld_id_hm_basic__id<-paste(HIES_demo$hhld_id,HIES_demo$hm_basic__id,sep="::" )
+
+# upload hhid and person id hies data
+HIES_HHid<-read.csv("2021-08-30_hies_tidy_household-level.csv")
+HIES_personid<-read.csv("2021-08-30_hies_tidy_individual-level.csv")
+HIES_personid<-merge(HIES_personid,HIES_HHid[,c("interview__key","hhld_id")],by="interview__key",all.x=T)
+
+#make island names consistent across Dharma and HIES and add unique identifiers
+HIES_personid$island2<-ifelse(HIES_personid$island=="North Tabiteuea","Tabiteuea North",HIES_personid$island)
+HIES_personid$community_island<-paste(HIES_personid$village,HIES_personid$island2,sep="::")
+HIES_personid$hhld_id_hm_basic__id<-paste(HIES_personid$hhld_id,HIES_personid$hm_basic__id,sep="::" )
+
+#add development to Dharma
+kiri_data_clean$development<-ifelse(kiri_data_clean$island_corrected=="South Tarawa" | kiri_data_clean$island_corrected=="Kiritimati"| kiri_data_clean$island_corrected=="North Tarawa","High development",
+                                    ifelse(kiri_data_clean$island_corrected=="Tabiteuea North" | kiri_data_clean$island_corrected=="Abemama"| kiri_data_clean$island_corrected=="Abaiang","Medium development",
+                                           "Low development"))
+
+#order islands
+ kiri_data_clean<- within( kiri_data_clean, 
+                   island_corrected <- factor(island_corrected, 
+                                        levels=c("Abaiang", "Abemama", "Butaritari","North Tarawa", "Onotoa","Tabiteuea South", "Tabiteuea North", "Tabuaeran","Kiritimati","South Tarawa")))
+
+
+
+
+
+#summary sample sizes for paper
+length(unique(kiri_data_clean$island_HIES))
+length(unique(kiri_data_clean$community_island))
+length(unique(kiri_data_clean$interview__key))
+
+################################################################################
+# Individual biomarker sample sizes and analyses (Dharma)
+################################################################################
+#standardize age
+kiri_data_clean$sageyears<-(kiri_data_clean$ageyears_corrected-mean(kiri_data_clean$ageyears_corrected,na.rm=T))/(2*sd(kiri_data_clean$ageyears_corrected,na.rm=T))
+
+
+#Blood pressure status__________________________________________________________
+
+#check sample per household tends to be above 1
+ddply(kiri_data_clean, .(interview__key), summarise, n_hh_sampled=length(unique(hhld_id_corrected)),n_people_sampled=length(unique(hhld_id_hm_basic__id)))  
+
+#provide sample sizes
+length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18 & !(kiri_data_clean$BloodPressure_status=="Normal"|kiri_data_clean$BloodPressure_status=="Elevated"|kiri_data_clean$BloodPressure_status=="Stage 1")])/length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18 & (kiri_data_clean$BloodPressure_status=="Normal")])/length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18 & (kiri_data_clean$BloodPressure_status=="Elevated")])/length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18])
+
+length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18 & (kiri_data_clean$BloodPressure_status=="Stage 1")])/length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18 & (kiri_data_clean$BloodPressure_status=="Stage 2")])/length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18 & (kiri_data_clean$BloodPressure_status=="Hypertensive Crisis")])/length(kiri_data_clean$BloodPressure_status [!(is.na(kiri_data_clean$BloodPressure_status)|kiri_data_clean$BloodPressure_status=="NA") & !kiri_data_clean$ageyears_corrected<18])
+
+#bloood pressure null model
+bp_model<-brm(BloodPressure_status~1+(1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!kiri_data_clean$BloodPressure_status=="NA",],family=cumulative("logit"),control = list(adapt_delta = 0.9),iter=3000, warmup = 1000)
+#blood pressure as a function of age and sex
+bp_model_sexage<-brm(BloodPressure_status~gender_corrected+sageyears+(1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!kiri_data_clean$BloodPressure_status=="NA",],family=cumulative("logit"),control = list(adapt_delta = 0.9),iter=3000, warmup = 1000)
+#model selection based on leave-out-one crossvalidation
+loo_bp<-loo(bp_model,bp_model_sexage)
+
+#examine best-fit model
+summary(bp_model_sexage)
+levels(kiri_data_clean$BloodPressure_status)
+bp_pp_fig<-pp_check(bp_model_sexage,nsamples = 100)+ggtitle("Blood pressure status")
+check_hmc_diagnostics(bp_model_sexage$fit)
+hist(rhat(bp_model_sexage))
+
+windows()
+pairs(bp_model_sexage)
+
+#extract random and fixed effects and plot them
+bp_ranef_community<-as.data.frame(ranef(bp_model_sexage, groups="island_corrected:community_island", probs = c(0.1,0.9)))
+bp_ranef_community$community<-row.names(bp_ranef_community)
+colnames(bp_ranef_community)<-c("estimate","se","conf.low","conf.high","community")
+bp_ranef_community_fig<-ggplot(bp_ranef_community,aes(x=estimate,y=community,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from island intercept")+ggtitle("Blood pressure")
+
+bp_ranef_island<-as.data.frame(ranef(bp_model_sexage, groups="island_corrected", probs = c(0.1,0.9)))
+bp_ranef_island$island<-row.names(bp_ranef_island)
+colnames(bp_ranef_island)<-c("estimate","se","conf.low","conf.high","island")
+bp_ranef_island$island <- factor(bp_ranef_island$island, levels = c("South Tarawa","Kiritimati","North Tarawa","Tabiteuea North","Abemama","Abaiang","Butaritari","Onotoa","Tabiteuea South","Tabuaeran"))
+bp_ranef_island_fig<-ggplot(bp_ranef_island,aes(x=estimate,y=island,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from national intercept")+ggtitle("Blood pressure status")
+
+bp_fixef<-as.data.frame(fixef(bp_model_sexage, probs = c(0.1,0.9)))[5:6,]
+bp_fixef$variable<-row.names(bp_fixef)
+bp_fixef_fig<-ggplot(bp_fixef,aes(x=Estimate,y=variable,xmin=Q10,xmax=Q90))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+xlab("Effect size")+ylab("")+
+  ggtitle("Hypertension")
+bp_cond_fig1<-conditional_effects(bp_model_sexage, categorical=T, effects="sageyears")
+bp_cond_fig2<-conditional_effects(bp_model_sexage, categorical=T, effects="gender_corrected")
+
+#do conditional effect plot myself
+newdata_BP<-as.data.frame(expand.grid(sageyears=seq(min(kiri_data_clean$sageyears[!kiri_data_clean$BloodPressure_status=="NA"],na.rm=T),max(kiri_data_clean$sageyears[!kiri_data_clean$BloodPressure_status=="NA"],na.rm=T), length=100),
+                        gender_corrected="F"))
+newdata_BP_pred<-posterior_epred(bp_model_sexage,newdata=newdata_BP,re_formula = NA)
+newdata_BP_pred1<-as.data.frame(rbind(cbind(matrixStats::colQuantiles(newdata_BP_pred[,,1],probs=c(0.1,0.5,0.9)),rep("Normal",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_BP_pred[,,2],probs=c(0.1,0.5,0.9)),rep("Elevated",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_BP_pred[,,3],probs=c(0.1,0.5,0.9)),rep("Stage 1",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_BP_pred[,,4],probs=c(0.1,0.5,0.9)),rep("Stage 2",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_BP_pred[,,5],probs=c(0.1,0.5,0.9)),rep("Hypertensive Crisis",100))))
+colnames(newdata_BP_pred1)<-c("low","estimate","high","stage") 
+newdata_BP_pred1$Hypertension<-factor(newdata_BP_pred1$stage, levels=levels(kiri_data_clean$BloodPressure_status)[1:5])
+newdata_BP_pred1$sageyears<-newdata_BP$sageyears
+newdata_BP_pred1$age<-(newdata_BP$sageyears*(2*sd(kiri_data_clean$ageyears_corrected,na.rm=T)))+mean(kiri_data_clean$ageyears_corrected,na.rm=T)
+bp_cond_fig1_clean<-ggplot(newdata_BP_pred1,aes(y= as.numeric(estimate),x=age,ymax=as.numeric(high),ymin=as.numeric(low),group=Hypertension))+geom_ribbon(aes(fill=Hypertension),alpha=0.5)+geom_line(aes(col=Hypertension))+xlab ("Age (years)")+ylab ("Probability")+scale_fill_brewer(palette = "Reds")+scale_color_brewer(palette = "Reds")+theme_classic()
+
+
+#Glucose status__________________________________________________________
+length(kiri_data_clean$Glucose_status[!(is.na(kiri_data_clean$Glucose_status)|kiri_data_clean$Glucose_status=="NA")& !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$glucose_corrected[!is.na(kiri_data_clean$glucose_corrected)& !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$Glucose_status[!(is.na(kiri_data_clean$Glucose_status) |kiri_data_clean$Glucose_status=="NA")& !kiri_data_clean$ageyears_corrected<18 &kiri_data_clean$Glucose_status=="Hyperglycemic"])/length(kiri_data_clean$Glucose_status[!(is.na(kiri_data_clean$Glucose_status)|kiri_data_clean$Glucose_status=="NA")& !kiri_data_clean$ageyears_corrected<18])
+summary(kiri_data_clean$ageyears_corrected[!(is.na(kiri_data_clean$Glucose_status)|kiri_data_clean$Glucose_status=="NA")& !kiri_data_clean$ageyears_corrected<18])
+#modelling glucose status
+summary(kiri_data_clean$Glucose_status)
+summary(kiri_data_clean$glucose_corrected[!is.na(kiri_data_clean$glucose_corrected)& !kiri_data_clean$ageyears_corrected<18])
+
+#only two levels
+glu_model<-brm(Glucose_status~1+(1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!kiri_data_clean$Glucose_status=="NA",],family=bernoulli("logit"),control = list(adapt_delta = 0.9),iter=3000, warmup = 1000)
+glu_model_sexage<-brm(Glucose_status~1+gender_corrected+sageyears+(1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!kiri_data_clean$Glucose_status=="NA",],family=bernoulli("logit"),control = list(adapt_delta = 0.9),iter=3000, warmup = 1000)
+
+#model selection
+loo_glu<-loo(glu_model,glu_model_sexage)
+
+
+#examine best-fit model
+summary(glu_model_sexage)
+glu_pp_fig<-pp_check(glu_model_sexage,nsamples = 100)+ggtitle("Glucose status")
+check_hmc_diagnostics(glu_model_sexage$fit)
+hist(rhat(glu_model_sexage))
+
+
+#extract random and fixed effects and plot them
+glu_ranef_community<-as.data.frame(ranef(glu_model_sexage, groups="island_corrected:community_island", probs = c(0.1,0.9)))
+glu_ranef_community$community<-row.names(glu_ranef_community)
+colnames(glu_ranef_community)<-c("estimate","se","conf.low","conf.high","community")
+glu_ranef_community_fig<-ggplot(glu_ranef_community,aes(x=estimate,y=community,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from island intercept")+ggtitle("Glucose status")
+
+glu_ranef_island<-as.data.frame(ranef(glu_model_sexage, groups="island_corrected", probs = c(0.1,0.9)))
+glu_ranef_island$island<-row.names(glu_ranef_island)
+colnames(glu_ranef_island)<-c("estimate","se","conf.low","conf.high","island")
+glu_ranef_island$island <- factor(glu_ranef_island$island, levels = c("South Tarawa","Kiritimati","North Tarawa","Tabiteuea North","Abemama","Abaiang","Butaritari","Onotoa","Tabiteuea South","Tabuaeran"))
+glu_ranef_island_fig<-ggplot(glu_ranef_island,aes(x=estimate,y=island,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from national intercept")+ggtitle("Glucose status")
+
+glu_fixef<-as.data.frame(fixef(glu_model_sexage, probs = c(0.1,0.9)))[2:3,]
+glu_fixef$variable<-row.names(glu_fixef)
+glu_fixef_fig<-ggplot(glu_fixef,aes(x=Estimate,y=variable,xmin=Q10,xmax=Q90))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+xlab("Effect size")+ylab("")+
+  ggtitle("Hyperglycemia")
+glu_cond_fig1<-conditional_effects(glu_model_sexage,  effects="sageyears")
+glu_cond_fig2<-conditional_effects(glu_model_sexage, effects="gender_corrected")
+
+#do conditional effect plot myself
+newdata_GLU<-as.data.frame(expand.grid(sageyears=seq(min(kiri_data_clean$sageyears[!kiri_data_clean$Glucose_status=="NA"],na.rm=T),max(kiri_data_clean$sageyears[!kiri_data_clean$Glucose_status=="NA"],na.rm=T), length=100),
+                                      gender_corrected="F"))
+newdata_GLU_pred<-posterior_epred(glu_model_sexage,newdata=newdata_GLU,re_formula = NA)
+newdata_GLU_pred1<-as.data.frame(matrixStats::colQuantiles(newdata_GLU_pred,probs=c(0.1,0.5,0.9)))
+colnames(newdata_GLU_pred1)<-c("low","estimate","high") 
+newdata_GLU_pred1$sageyears<-newdata_GLU$sageyears
+newdata_GLU_pred1$age<-(newdata_GLU$sageyears*(2*sd(kiri_data_clean$ageyears_corrected,na.rm=T)))+mean(kiri_data_clean$ageyears_corrected,na.rm=T)
+glu_cond_fig1_clean<-ggplot(newdata_GLU_pred1,aes(y= as.numeric(estimate),x=age,ymax=as.numeric(high),ymin=as.numeric(low)))+geom_ribbon(alpha=0.5, fill="red")+geom_line(col="darkred")+xlab ("Age (years)")+ylab ("Probability of hyperglycemia")+theme_classic()
+
+#_______________________________________________________________________________
+
+#Cholesterol status_____________________________________________________________
+length(kiri_data_clean$cholesterol_status [!(is.na(kiri_data_clean$cholesterol_status)|kiri_data_clean$cholesterol_status=="NA")&!kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$cholesterol_status [!(is.na(kiri_data_clean$cholesterol_status)|kiri_data_clean$cholesterol_status=="NA")&(kiri_data_clean$ageyears_corrected<18 & !kiri_data_clean$ageyears_corrected<12)])
+
+length(kiri_data_clean$cholesterol_status [!(is.na(kiri_data_clean$cholesterol_status)|kiri_data_clean$cholesterol_status=="NA")&!kiri_data_clean$ageyears_corrected<18 &kiri_data_clean$cholesterol_status=="At risk"])/length(kiri_data_clean$cholesterol_status [!(is.na(kiri_data_clean$cholesterol_status)|kiri_data_clean$cholesterol_status=="NA")&!kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$cholesterol_status [!(is.na(kiri_data_clean$cholesterol_status)|kiri_data_clean$cholesterol_status=="NA")&(kiri_data_clean$ageyears_corrected<18 & !kiri_data_clean$ageyears_corrected<12)&kiri_data_clean$cholesterol_status=="At risk"])/length(kiri_data_clean$cholesterol_status [!(is.na(kiri_data_clean$cholesterol_status)|kiri_data_clean$cholesterol_status=="NA")&(kiri_data_clean$ageyears_corrected<18 & !kiri_data_clean$ageyears_corrected<12)])
+
+summary(kiri_data_clean$ldl_corrected[ !kiri_data_clean$ageyears_corrected<18])
+summary(kiri_data_clean$L1_q61_hdl[ !kiri_data_clean$ageyears_corrected<18])
+
+summary(kiri_data_clean$cholesterol_status)
+#models
+chol_model<-brm(cholesterol_status~1+(1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!(is.na(kiri_data_clean$cholesterol_status)|kiri_data_clean$cholesterol_status=="NA"|kiri_data_clean$cholesterol_status=="Age under 12"),],family=bernoulli("logit"))
+chol_model_sexage<-brm(cholesterol_status~gender_corrected+sageyears+(1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!(is.na(kiri_data_clean$cholesterol_status)|kiri_data_clean$cholesterol_status=="NA"|kiri_data_clean$cholesterol_status=="Age under 12"),],family=bernoulli("logit"))
+
+#model selection
+loo_chol<-loo(chol_model,chol_model_sexage)
+
+#examine best-fit model
+summary(chol_model_sexage)
+chol_pp_fig<-pp_check(chol_model_sexage,nsamples = 100)+ggtitle("Cholesterol status")
+check_hmc_diagnostics(chol_model_sexage$fit)
+hist(rhat(chol_model_sexage))
+
+
+#extract random and fixed effects and plot them
+chol_ranef_community<-as.data.frame(ranef(chol_model_sexage, groups="island_corrected:community_island", probs = c(0.1,0.9)))
+chol_ranef_community$community<-row.names(chol_ranef_community)
+colnames(chol_ranef_community)<-c("estimate","se","conf.low","conf.high","community")
+chol_ranef_community_fig<-ggplot(chol_ranef_community,aes(x=estimate,y=community,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from island intercept")+ggtitle("Cholesterol status")
+
+chol_ranef_island<-as.data.frame(ranef(chol_model_sexage, groups="island_corrected", probs = c(0.1,0.9)))
+chol_ranef_island$island<-row.names(chol_ranef_island)
+colnames(chol_ranef_island)<-c("estimate","se","conf.low","conf.high","island")
+chol_ranef_island$island <- factor(chol_ranef_island$island, levels = c("South Tarawa","Kiritimati","North Tarawa","Tabiteuea North","Abemama","Abaiang","Butaritari","Onotoa","Tabiteuea South","Tabuaeran"))
+chol_ranef_island_fig<-ggplot(chol_ranef_island,aes(x=estimate,y=island,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from national intercept")+ggtitle("Cholesterol status")
+
+chol_fixef<-as.data.frame(fixef(chol_model_sexage, probs = c(0.1,0.9)))[2:3,]
+chol_fixef$variable<-row.names(chol_fixef)
+chol_fixef_fig<-ggplot(chol_fixef,aes(x=Estimate,y=variable,xmin=Q10,xmax=Q90))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+xlab("Effect size")+ylab("")+
+  ggtitle("Hypercholesterolemia")
+chol_cond_fig1<-conditional_effects(chol_model_sexage,  effects="sageyears")
+chol_cond_fig2<-conditional_effects(chol_model_sexage,  effects="gender_corrected")
+#do conditional effect plot myself
+newdata_CHOL<-as.data.frame(expand.grid(sageyears=seq(min(kiri_data_clean$sageyears[!kiri_data_clean$cholesterol_status=="NA"],na.rm=T),max(kiri_data_clean$sageyears[!kiri_data_clean$cholesterol_status=="NA"],na.rm=T), length=100),
+                                       gender_corrected="F"))
+newdata_CHOL_pred<-posterior_epred(chol_model_sexage,newdata=newdata_CHOL,re_formula = NA)
+newdata_CHOL_pred1<-as.data.frame(matrixStats::colQuantiles(newdata_CHOL_pred,probs=c(0.1,0.5,0.9)))
+colnames(newdata_CHOL_pred1)<-c("low","estimate","high") 
+newdata_CHOL_pred1$sageyears<-newdata_CHOL$sageyears
+newdata_CHOL_pred1$age<-(newdata_CHOL$sageyears*(2*sd(kiri_data_clean$ageyears_corrected,na.rm=T)))+mean(kiri_data_clean$ageyears_corrected,na.rm=T)
+chol_cond_fig1_clean<-ggplot(newdata_CHOL_pred1,aes(y= as.numeric(estimate),x=age,ymax=as.numeric(high),ymin=as.numeric(low)))+geom_ribbon(alpha=0.5, fill="red")+geom_line(col="darkred")+xlab ("Age (years)")+ylab ("Probability of hypercholesterolemia")+theme_classic()
+
+
+#_______________________________________________________________________________
+#triglycerides status___________________________________________________________
+summary(kiri_data_clean$triglycerides_status)
+summary(kiri_data_clean$triglycerides_corrected[ !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA")& !kiri_data_clean$ageyears_corrected<18])
+
+length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18&(kiri_data_clean$triglycerides_status=="Low-normal"|kiri_data_clean$triglycerides_status=="High-normal")])/length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18&(kiri_data_clean$triglycerides_status=="Borderline hypertriglyceridemia")])/length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18&(kiri_data_clean$triglycerides_status=="Moderate hypertriglyceridemia"|kiri_data_clean$triglycerides_status=="Severe hypertriglyceridemia")])/length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18&(kiri_data_clean$triglycerides_status=="Moderate hypertriglyceridemia")])/length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18&(kiri_data_clean$triglycerides_status=="Severe hypertriglyceridemia")])/length(kiri_data_clean$triglycerides_status [!(is.na(kiri_data_clean$triglycerides_status)|kiri_data_clean$triglycerides_status=="NA") &!kiri_data_clean$triglycerides_status=="Age under 12"& !kiri_data_clean$ageyears_corrected<18])
+
+
+#models
+tri_model<-brm(triglycerides_status~1+(1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!(kiri_data_clean$triglycerides_status=="NA"|kiri_data_clean$triglycerides_status=="Age under 12"),],family=cumulative("logit"))
+tri_model_sexage<-brm(triglycerides_status~1+sageyears+gender_corrected+ (1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!(kiri_data_clean$triglycerides_status=="NA"|kiri_data_clean$triglycerides_status=="Age under 12"),],family=cumulative("logit"))
+#model selection
+loo_tri<-loo(tri_model,tri_model_sexage)
+#examine best-fit model
+summary(tri_model_sexage)
+tri_pp_fig<-pp_check(tri_model_sexage,nsamples = 100)+ggtitle("Tryglicerid status")
+check_hmc_diagnostics(tri_model_sexage$fit)
+hist(rhat(tri_model_sexage))
+
+
+#extract random and fixed effects and plot them
+tri_ranef_community<-as.data.frame(ranef(tri_model_sexage, groups="island_corrected:community_island", probs = c(0.1,0.9)))
+tri_ranef_community$community<-row.names(tri_ranef_community)
+colnames(tri_ranef_community)<-c("estimate","se","conf.low","conf.high","community")
+tri_ranef_community_fig<-ggplot(tri_ranef_community,aes(x=estimate,y=community,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from island intercept")+ggtitle("Tryglicerid status")
+
+tri_ranef_island<-as.data.frame(ranef(tri_model_sexage, groups="island_corrected", probs = c(0.1,0.9)))
+tri_ranef_island$island<-row.names(tri_ranef_island)
+colnames(tri_ranef_island)<-c("estimate","se","conf.low","conf.high","island")
+tri_ranef_island$island <- factor(tri_ranef_island$island, levels = c("South Tarawa","Kiritimati","North Tarawa","Tabiteuea North","Abemama","Abaiang","Butaritari","Onotoa","Tabiteuea South","Tabuaeran"))
+tri_ranef_island_fig<-ggplot(tri_ranef_island,aes(x=estimate,y=island,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from national intercept")+ggtitle("Tryglicerid status")
+
+tri_fixef<-as.data.frame(fixef(tri_model_sexage, probs = c(0.1,0.9)))[5:6,]
+tri_fixef$variable<-row.names(tri_fixef)
+tri_fixef_fig<-ggplot(tri_fixef,aes(x=Estimate,y=variable,xmin=Q10,xmax=Q90))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+xlab("Effect size")+ylab("")+
+  ggtitle("Hypertriglyceridemia")
+tri_cond_fig1<-conditional_effects(tri_model_sexage,  categorical=T,effects="sageyears")
+tri_cond_fig2<-conditional_effects(tri_model_sexage, categorical=T, effects="gender_corrected")
+
+#do conditional effect plot myself
+newdata_TRI<-as.data.frame(expand.grid(sageyears=seq(min(kiri_data_clean$sageyears[!kiri_data_clean$triglycerides_status=="NA"],na.rm=T),max(kiri_data_clean$sageyears[!kiri_data_clean$triglycerides_status=="NA"],na.rm=T), length=100),
+                                      gender_corrected="F"))
+newdata_TRI_pred<-posterior_epred(tri_model_sexage,newdata=newdata_TRI,re_formula = NA)
+newdata_TRI_pred1<-as.data.frame(rbind(cbind(matrixStats::colQuantiles(newdata_TRI_pred[,,1],probs=c(0.1,0.5,0.9)),rep("Low-normal",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_TRI_pred[,,2],probs=c(0.1,0.5,0.9)),rep("High-normal",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_TRI_pred[,,3],probs=c(0.1,0.5,0.9)),rep("Borderline hypertriglyceridemia",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_TRI_pred[,,4],probs=c(0.1,0.5,0.9)),rep("Moderate hypertriglyceridemia",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_TRI_pred[,,5],probs=c(0.1,0.5,0.9)),rep("Severe hypertriglyceridemia",100))))
+colnames(newdata_TRI_pred1)<-c("low","estimate","high","stage") 
+newdata_TRI_pred1$Hypertriglyceridemia<-factor(newdata_TRI_pred1$stage, levels=levels(kiri_data_clean$triglycerides_status)[1:5])
+newdata_TRI_pred1$sageyears<-newdata_TRI$sageyears
+newdata_TRI_pred1$age<-(newdata_TRI$sageyears*(2*sd(kiri_data_clean$ageyears_corrected,na.rm=T)))+mean(kiri_data_clean$ageyears_corrected,na.rm=T)
+tri_cond_fig1_clean<-ggplot(newdata_TRI_pred1,aes(y= as.numeric(estimate),x=age,ymax=as.numeric(high),ymin=as.numeric(low),group=Hypertriglyceridemia))+geom_ribbon(aes(fill=Hypertriglyceridemia),alpha=0.5)+geom_line(aes(col=Hypertriglyceridemia))+xlab ("Age (years)")+ylab ("Probability")+scale_fill_brewer(palette = "Reds")+scale_color_brewer(palette = "Reds")+theme_classic()
+
+#_______________________________________________________________________________
+# Diabetes status_______________________________________________________________
+
+
+length(kiri_data_clean$diabetes_corrected[!is.na(kiri_data_clean$diabetes_corrected)])
+length(kiri_data_clean$diabetes_status [!(is.na(kiri_data_clean$diabetes_status)|kiri_data_clean$diabetes_status=="NA"|kiri_data_clean$diabetes_status=="Age under 12")& !kiri_data_clean$ageyears_corrected<18])
+summary(kiri_data_clean$diabetes_status)
+length(kiri_data_clean$diabetes_status [!(is.na(kiri_data_clean$diabetes_status)|kiri_data_clean$diabetes_status=="NA"|kiri_data_clean$diabetes_status=="Age under 12")& !kiri_data_clean$ageyears_corrected<18&kiri_data_clean$diabetes_status=="At risk"])/length(kiri_data_clean$diabetes_status [!(is.na(kiri_data_clean$diabetes_status)|kiri_data_clean$diabetes_status=="NA"|kiri_data_clean$diabetes_status=="Age under 12")& !kiri_data_clean$ageyears_corrected<18])
+length(kiri_data_clean$diabetes_status [!(is.na(kiri_data_clean$diabetes_status)|kiri_data_clean$diabetes_status=="NA"|kiri_data_clean$diabetes_status=="Age under 12")& !kiri_data_clean$ageyears_corrected<18&kiri_data_clean$diabetes_status=="Diabetic"])/length(kiri_data_clean$diabetes_status [!(is.na(kiri_data_clean$diabetes_status)|kiri_data_clean$diabetes_status=="NA"|kiri_data_clean$diabetes_status=="Age under 12")& !kiri_data_clean$ageyears_corrected<18])
+
+#models
+diab_model<-brm(diabetes_status~1+(1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!(kiri_data_clean$diabetes_status=="NA"|kiri_data_clean$diabetes_status=="Age under 12"),],family=cumulative("logit"),control = list(adapt_delta = 0.9),iter=3000, warmup = 1000)
+diab_model_sexage<-brm(diabetes_status~1+sageyears+gender_corrected+ (1|island_corrected/community_island/hhld_id_corrected),data=kiri_data_clean[!(kiri_data_clean$diabetes_status=="NA"|kiri_data_clean$diabetes_status=="Age under 12"),],family=cumulative("logit"),control = list(adapt_delta = 0.9),iter=3000, warmup = 1000)
+#model selection
+loo_diab<-loo(diab_model,diab_model_sexage)
+
+
+#examine best-fit model
+summary(diab_model_sexage)
+diab_pp_fig<-pp_check(diab_model_sexage,nsamples = 100)+ggtitle("Diabetes status")
+check_hmc_diagnostics(diab_model_sexage$fit)
+hist(rhat(diab_model_sexage))
+
+
+#extract random and fixed effects and plot them
+diab_ranef_community<-as.data.frame(ranef(diab_model_sexage, groups="island_corrected:community_island", probs = c(0.1,0.9)))
+diab_ranef_community$community<-row.names(diab_ranef_community)
+colnames(diab_ranef_community)<-c("estimate","se","conf.low","conf.high","community")
+diab_ranef_community_fig<-ggplot(diab_ranef_community,aes(x=estimate,y=community,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from island intercept")+ggtitle("Diabetes status")
+
+diab_ranef_island<-as.data.frame(ranef(diab_model_sexage, groups="island_corrected", probs = c(0.1,0.9)))
+diab_ranef_island$island<-row.names(diab_ranef_island)
+colnames(diab_ranef_island)<-c("estimate","se","conf.low","conf.high","island")
+diab_ranef_island$island <- factor(diab_ranef_island$island, levels = c("South Tarawa","Kiritimati","North Tarawa","Tabiteuea North","Abemama","Abaiang","Butaritari","Onotoa","Tabiteuea South","Tabuaeran"))
+diab_ranef_island_fig<-ggplot(diab_ranef_island,aes(x=estimate,y=island,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from national intercept")+ggtitle("Diabetes status")
+
+diab_fixef<-as.data.frame(fixef(diab_model_sexage, probs = c(0.1,0.9)))[3:4,]
+diab_fixef$variable<-row.names(diab_fixef)
+diab_fixef_fig<-ggplot(diab_fixef,aes(x=Estimate,y=variable,xmin=Q10,xmax=Q90))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+xlab("Effect size")+ylab("")+
+  ggtitle("Diabetes")
+diab_cond_fig1<-conditional_effects(diab_model_sexage, categorical=T, effects="sageyears")
+diab_cond_fig2<-conditional_effects(diab_model_sexage, categorical=T, effects="gender_corrected")
+
+#do conditional effect plot myself
+newdata_DIAB<-as.data.frame(expand.grid(sageyears=seq(min(kiri_data_clean$sageyears[!kiri_data_clean$diabetes_status=="NA"],na.rm=T),max(kiri_data_clean$sageyears[!kiri_data_clean$diabetes_status=="NA"],na.rm=T), length=100),
+                                      gender_corrected="F"))
+newdata_DIAB_pred<-posterior_epred(diab_model_sexage,newdata=newdata_DIAB,re_formula = NA)
+newdata_DIAB_pred1<-as.data.frame(rbind(cbind(matrixStats::colQuantiles(newdata_DIAB_pred[,,1],probs=c(0.1,0.5,0.9)),rep("Normal",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_DIAB_pred[,,2],probs=c(0.1,0.5,0.9)),rep("At risk",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_DIAB_pred[,,3],probs=c(0.1,0.5,0.9)),rep("Diabetic",100))))
+colnames(newdata_DIAB_pred1)<-c("low","estimate","high","stage") 
+newdata_DIAB_pred1$Diabetes<-factor(newdata_DIAB_pred1$stage, levels=levels(kiri_data_clean$diabetes_status)[1:3])
+newdata_DIAB_pred1$sageyears<-newdata_DIAB$sageyears
+newdata_DIAB_pred1$age<-(newdata_DIAB$sageyears*(2*sd(kiri_data_clean$ageyears_corrected,na.rm=T)))+mean(kiri_data_clean$ageyears_corrected,na.rm=T)
+diab_cond_fig1_clean<-ggplot(newdata_DIAB_pred1,aes(y= as.numeric(estimate),x=age,ymax=as.numeric(high),ymin=as.numeric(low),group=Diabetes))+geom_ribbon(aes(fill=Diabetes),alpha=0.5)+geom_line(aes(col=Diabetes))+xlab ("Age (years)")+ylab ("Probability")+scale_fill_brewer(palette = "Reds")+scale_color_brewer(palette = "Reds")+theme_classic()
+
+
+###############################################################################
+#do some analyses with the HIES outcomes: BMI AND ANEMIA........................
+
+#first make sure we have variables we need as we want them
+HIES_personid$smoked_last7days<-as.factor(HIES_personid$p601__8)
+HIES_personid$smoked_last7days<-as.factor(ifelse(is.na(HIES_personid$smoked_last7days),"unknown",ifelse(HIES_personid$smoked_last7days=="1","Yes","No")))
+HIES_personid$island2<-ifelse(HIES_personid$island=="North Tabiteuea","Tabiteuea North",HIES_personid$island)
+HIES_personid$community_island<-paste(HIES_personid$village,HIES_personid$island2,sep="::")
+HIES_personid$sageyears<-(HIES_personid$age-mean(HIES_personid$age,na.rm=T))/(2*sd(HIES_personid$age,na.rm=T))
+
+
+#bmi category___________________________________________________________________
+HIES_personid$bmi<- HIES_personid$p302 / ((HIES_personid$p301/100)^2 )
+HIES_personid$bmi<-ifelse(is.infinite(HIES_personid$bmi),NA,HIES_personid$bmi)
+
+summary(HIES_personid$bmi)
+#summarize
+summary(HIES_personid$p302 )#height
+summary(HIES_personid$p301)#weight
+
+#categorize based on bmi values (for over 18)
+HIES_personid <- HIES_personid %>% 
+  mutate( bmi_cat = case_when(  (is.na(age)|age==""|is.na(p301)|is.na(p302)|p302==0|p301==0|is.na(bmi)|is.infinite(bmi)|bmi>80)~ "NA",
+                                age<18~ "Age under 18",
+                                bmi >= 40 ~ "Obesity class III",
+                                bmi >=35 & bmi < 40 ~ "Obesity class II",
+                                bmi >=30 & bmi <35 ~ "Obesity class I",
+                                bmi >= 25 & bmi < 30 ~ "Overweight",
+                                bmi >= 18.5 & bmi <25 ~ "Normal weight",
+                                bmi < 18.5 ~ "Underweight"))
+
+HIES_personid$bmi_cat<-ordered(as.factor(HIES_personid$bmi_cat), levels = c(
+  "Underweight", "Normal weight", "Overweight", "Obesity class I", "Obesity class II", "Obesity class III","Age under 18","NA" ))
+
+
+
+#sample sizes
+summary(HIES_personid$bmi_cat)
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="NA"|HIES_personid$bmi_cat=="Age under 18")])
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")&HIES_personid$bmi_cat=="Overweight"])/length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")])
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")&HIES_personid$bmi_cat=="Obesity class I"])/length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")])
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")&HIES_personid$bmi_cat=="Obesity class II"])/length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")])
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")&HIES_personid$bmi_cat=="Obesity class III"])/length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")])
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")&(HIES_personid$bmi_cat=="Obesity class I"|HIES_personid$bmi_cat=="Obesity class II"|HIES_personid$bmi_cat=="Obesity class III")])/length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")])
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")&HIES_personid$bmi_cat=="Overweight"|HIES_personid$bmi_cat=="Obesity class I"|HIES_personid$bmi_cat=="Obesity class II"|HIES_personid$bmi_cat=="Obesity class III"])/length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")])
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")&HIES_personid$bmi_cat=="Underweight"])/length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")])
+length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")&HIES_personid$bmi_cat=="Normal weight"])/length(HIES_personid$bmi_cat[!(is.na(HIES_personid$bmi_cat)|HIES_personid$bmi_cat=="Age under 18"|HIES_personid$bmi_cat=="NA")])
+
+
+## obesity models
+obes_model<-brm(bmi_cat~1+(1|island2/community_island/hhld_id),data=HIES_personid[!(HIES_personid$bmi_cat=="NA"|HIES_personid$bmi_cat=="Age under 18"),],family=cumulative("logit"))
+obes_model_sexage<-brm(bmi_cat~1+sageyears+sex+ (1|island2/community_island/hhld_id),data=HIES_personid[!(HIES_personid$bmi_cat=="NA"|HIES_personid$bmi_cat=="Age under 18"),],family=cumulative("logit"))
+
+#model selection
+loo_obes<-loo(obes_model,obes_model_sexage)
+
+#examine best-fit model
+summary(obes_model_sexage)
+obes_pp_fig<-pp_check(obes_model_sexage,nsamples = 100)+ggtitle("Body mass index classification")
+check_hmc_diagnostics(obes_model_sexage$fit)
+hist(rhat(obes_model_sexage))
+
+
+#extract random and fixed effects and plot them
+obes_ranef_community<-as.data.frame(ranef(obes_model_sexage, groups="island2:community_island", probs = c(0.1,0.9)))
+obes_ranef_community$community<-row.names(obes_ranef_community)
+colnames(obes_ranef_community)<-c("estimate","se","conf.low","conf.high","community")
+obes_ranef_community_fig<-ggplot(obes_ranef_community,aes(x=estimate,y=community,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from island intercept")+ggtitle("Body mass index classification")
+
+obes_ranef_island<-as.data.frame(ranef(obes_model_sexage, groups="island2", probs = c(0.1,0.9)))
+obes_ranef_island$island<-row.names(obes_ranef_island)
+colnames(obes_ranef_island)<-c("estimate","se","conf.low","conf.high","island")
+obes_ranef_island$island <- factor(obes_ranef_island$island, levels = c("South Tarawa","Kiritimati","North Tarawa","Tabiteuea North","Abemama","Abaiang","Butaritari","Onotoa","Tabiteuea South","Tabuaeran"))
+obes_ranef_island_fig<-ggplot(obes_ranef_island,aes(x=estimate,y=island,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from national intercept")+ggtitle("Body mass index classification")
+
+obes_fixef<-as.data.frame(fixef(obes_model_sexage, probs = c(0.1,0.9)))[6:7,]
+obes_fixef$variable<-row.names(obes_fixef)
+obes_fixef_fig<-ggplot(obes_fixef,aes(x=Estimate,y=factor(variable,levels=c("sexMale","sageyears")),xmin=Q10,xmax=Q90))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+xlab("Effect size")+ylab("")+
+  ggtitle("BMI classification")
+obes_cond_fig1<-conditional_effects(obes_model_sexage, categorical=T, effects="sageyears")
+obes_cond_fig2<-conditional_effects(obes_model_sexage, categorical=T, effects="sex")
+
+#do conditional effect plot myself
+newdata_OBES<-as.data.frame(expand.grid(sageyears=seq(min(HIES_personid$sageyears[!(HIES_personid$bmi_cat=="NA"|HIES_personid$bmi_cat=="Age under 18")],na.rm=T),max(HIES_personid$sageyears[!HIES_personid$bmi_cat=="NA"],na.rm=T), length=100),
+                                      sex="Female"))
+newdata_obes_pred<-posterior_epred(obes_model_sexage,newdata=newdata_OBES,re_formula = NA)
+newdata_obes_pred1<-as.data.frame(rbind(cbind(matrixStats::colQuantiles(newdata_obes_pred[,,1],probs=c(0.1,0.5,0.9)),rep("Underweight",100)),
+                                        cbind(matrixStats::colQuantiles(newdata_obes_pred[,,1],probs=c(0.1,0.5,0.9)),rep("Normal weight",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_obes_pred[,,2],probs=c(0.1,0.5,0.9)),rep("Overweight",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_obes_pred[,,3],probs=c(0.1,0.5,0.9)),rep("Obesity class I",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_obes_pred[,,4],probs=c(0.1,0.5,0.9)),rep("Obesity class II",100)),
+                                      cbind(matrixStats::colQuantiles(newdata_obes_pred[,,5],probs=c(0.1,0.5,0.9)),rep("Obesity class III",100))))
+colnames(newdata_obes_pred1)<-c("low","estimate","high","stage") 
+newdata_obes_pred1$bmi_cat<-factor(newdata_obes_pred1$stage, levels=levels(HIES_personid$bmi_cat)[1:6])
+newdata_obes_pred1$sageyears<-newdata_OBES$sageyears
+newdata_obes_pred1$age<-(newdata_OBES$sageyears*(2*sd(HIES_personid$age,na.rm=T)))+mean(HIES_personid$age,na.rm=T)
+obes_cond_fig1_clean<-ggplot(newdata_obes_pred1,aes(y= as.numeric(estimate),x=age,ymax=as.numeric(high),ymin=as.numeric(low),group=bmi_cat))+geom_ribbon(aes(fill=bmi_cat),alpha=0.5)+geom_line(aes(col=bmi_cat))+xlab ("Age (years)")+ylab ("Probability")+scale_fill_brewer("Body mass index classification" ,palette = "Reds")+scale_color_brewer("Body mass index classification",palette = "Reds")+theme_classic()
+
+
+#anemia status___________________________________________________________________
+
+summary(HIES_personid$hematocrit)
+summary(HIES_personid$haemoglobin)
+
+#based on hemoglobin____________________________________________________________
+HIES_personid <- HIES_personid %>% 
+ mutate(pregnant=as.factor(pregnant),
+        sex=as.factor(sex)) %>%
+  mutate(anemia_status = case_when(  (is.na(age)|age==""|is.na(hematocrit)|is.na(haemoglobin)|haemoglobin==0)~ "NA",
+      age >= (50) ~ "over 50",
+      
+         ((age < (5) & haemoglobin < 7) |
+         (age >= (5) & age < (12) & haemoglobin < 8) |
+         (age >= (12) & age < (15 ) & haemoglobin < 8) |
+         (age >= (15) & age < (50) & sex == "Female" & (pregnant == "No" | is.na(pregnant)) & haemoglobin < 8) |
+         (age >= (15) & age < (50) & sex == "Female" & pregnant == "Yes" & haemoglobin < 7) |
+         (age >= (15) & age < (50) & sex == "Male" & haemoglobin < 8))~ "severe", 
+      
+         ((age < (5) & haemoglobin >= 7 & haemoglobin < 10) |
+         (age >= (5) & age < (12) & haemoglobin >= 8 & haemoglobin < 11) |
+         (age >= (12) & age < (15 ) & haemoglobin >= 8 & haemoglobin < 11) |
+         (age >= (15) & age < (50) & sex == "Female" & (pregnant == "No" | is.na(pregnant))& haemoglobin >= 8 & haemoglobin < 11) |
+         (age >= (15) & age < (50) & sex == "Female" & pregnant == "Yes" & haemoglobin >= 7 & haemoglobin < 10) |
+         (age >= (15) & age < (50) & sex == "Male" & haemoglobin >= 8 & haemoglobin < 11))~ "moderate",
+      
+        ((age < (5) & haemoglobin >= 10 & haemoglobin < 11) |
+         (age >= (5) & age < (12) & haemoglobin >= 11 & haemoglobin < 11.5) |
+         (age >= (12) & age < (15) & haemoglobin >= 11 & haemoglobin < 12) |
+         (age >= (15) & age < (50) & sex == "Female" & (pregnant == "No" | is.na(pregnant)) & haemoglobin >= 11 & haemoglobin < 12) |
+         (age >= (15) & age < (50) & sex == "Female" & pregnant == "Yes" & haemoglobin >= 10 & haemoglobin < 11) |
+         (age >= (15) & age < (50) & sex == "Male" & haemoglobin >= 11 & haemoglobin < 13))~ "mild",
+      ((age < (5) & haemoglobin >= 11) |
+         (age >= (5) & age < (12) & haemoglobin >= 11.5) |
+         (age >= (12) & age < (15) & haemoglobin >= 12) |
+         (age >= (15) & age < (50) & sex == "Female" & (pregnant == "No" | is.na(pregnant)) & haemoglobin >= 12) |
+         (age >= (15) & age < (50) & sex == "Female" & pregnant == "Yes" & haemoglobin >= 11) |
+         (age >= (15) & age < (50) & sex == "Male" & haemoglobin >= 13))~ "non-anemic"))
+
+#order variable
+HIES_personid$anemia_status <- ordered(as.factor(HIES_personid$anemia_status), levels = c(
+  "non-anemic", "mild", "moderate", "severe", "over 50","NA"))
+#sample sizes
+summary(as.factor(HIES_personid$anemia_status))
+length(HIES_personid$anemia_status[!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50")])
+length(HIES_personid$anemia_status[HIES_personid$anemia_status=="mild"|HIES_personid$anemia_status=="moderate"|HIES_personid$anemia_status=="severe"])/length(HIES_personid$anemia_status[!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50")])
+length(HIES_personid$anemia_status[HIES_personid$anemia_status=="moderate"])/length(HIES_personid$anemia_status[!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50")])
+length(HIES_personid$anemia_status[HIES_personid$anemia_status=="severe"])/length(HIES_personid$anemia_status[!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50")])
+#reproductive age women
+length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50"))])
+length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (HIES_personid$anemia_status=="mild"|HIES_personid$anemia_status=="moderate"|HIES_personid$anemia_status=="severe")])/length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50"))])
+length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (HIES_personid$anemia_status=="mild"|HIES_personid$anemia_status=="moderate"|HIES_personid$anemia_status=="severe")])/length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50"))])
+length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (HIES_personid$anemia_status=="moderate")])/length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50"))])
+length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (HIES_personid$anemia_status=="severe")])/length(HIES_personid$anemia_status[HIES_personid$age>15 & HIES_personid$sex=="Female" & (!(is.na(HIES_personid$anemia_status)|HIES_personid$anemia_status=="over 50"))])
+
+
+#anemia models
+an_model<-brm(anemia_status~1+ (1|island2/community_island/hhld_id),data=HIES_personid[!is.na(HIES_personid$anemia_status)&!HIES_personid$anemia_status=="NA",]%>% 
+                                filter(anemia_status != "over 50"),family=cumulative("logit"))
+
+an_model_sexage<-brm(anemia_status~1+sageyears+sex+smoked_last7days+ (1|island2/community_island/hhld_id),data=HIES_personid[!is.na(HIES_personid$anemia_status)&!HIES_personid$anemia_status=="NA",]%>% 
+                                filter(anemia_status != "over 50"),family=cumulative("logit"))
+
+
+
+#model selection
+loo_an<-loo(an_model,an_model_sexage)
+
+#examine best-fit model
+summary(an_model_sexage)
+an_pp_fig<-pp_check(an_model_sexage,nsamples = 100)+ggtitle("Anemia status")
+check_hmc_diagnostics(an_model_sexage$fit)
+hist(rhat(an_model_sexage))
+
+
+#extract random and fixed effects and plot them
+an_ranef_community<-as.data.frame(ranef(an_model_sexage, groups="island2:community_island", probs = c(0.1,0.9)))
+an_ranef_community$community<-row.names(an_ranef_community)
+colnames(an_ranef_community)<-c("estimate","se","conf.low","conf.high","community")
+an_ranef_community_fig<-ggplot(an_ranef_community,aes(x=estimate,y=community,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from island intercept")+ggtitle("Anemia status")
+
+an_ranef_island<-as.data.frame(ranef(an_model_sexage, groups="island2", probs = c(0.1,0.9)))
+an_ranef_island$island<-row.names(an_ranef_island)
+colnames(an_ranef_island)<-c("estimate","se","conf.low","conf.high","island")
+#an_ranef_island$island <- factor(an_ranef_island$island, levels = c("South Tarawa","Kiritimati","North Tarawa","Tabiteuea North","Abemama","Abaiang","Butaritari","Onotoa","Tabiteuea South","Tabuaeran"))
+an_ranef_island_fig<-ggplot(an_ranef_island,aes(x=estimate,y=island,xmin=conf.low,xmax=conf.high))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+
+  xlab("Offset from national intercept")+ggtitle("Anemia status")
+
+an_fixef<-as.data.frame(fixef(an_model_sexage, probs = c(0.1,0.9)))[4:5,]
+an_fixef$variable<-row.names(an_fixef)
+an_fixef_fig<-ggplot(an_fixef,aes(x=Estimate,y=factor(variable,levels=c("sexMale","sageyears")),xmin=Q10,xmax=Q90))+geom_errorbar(width=0.1)+geom_point(fill="navyblue",pch=21,size=3)+geom_vline(xintercept = 0,lty=2)+theme_classic()+xlab("Effect size")+ylab("")+
+  ggtitle("Anemia")
+an_cond_fig1<-conditional_effects(an_model_sexage, categorical=T, effects="sageyears")
+an_cond_fig2<-conditional_effects(an_model_sexage, categorical=T, effects="sex")
+an_cond_fig3<-conditional_effects(an_model_sexage, categorical=T, effects="smoked_last7days")
+
+
+#do conditional effect plot myself
+newdata_AN<-as.data.frame(expand.grid(sageyears=seq(min(HIES_personid$sageyears[!(HIES_personid$anemia_status=="NA"|HIES_personid$anemia_status=="Age under 18")],na.rm=T),max(HIES_personid$sageyears[!HIES_personid$anemia_status=="NA"],na.rm=T), length=100),
+                                        sex="Female",smoked_last7days="No"))
+newdata_AN_pred<-posterior_epred(an_model_sexage,newdata=newdata_AN,re_formula = NA)
+newdata_AN_pred1<-as.data.frame(rbind(cbind(matrixStats::colQuantiles(newdata_AN_pred[,,1],probs=c(0.1,0.5,0.9)),rep("non-anemic",100)),
+                                        cbind(matrixStats::colQuantiles(newdata_AN_pred[,,1],probs=c(0.1,0.5,0.9)),rep("mild",100)),
+                                        cbind(matrixStats::colQuantiles(newdata_AN_pred[,,2],probs=c(0.1,0.5,0.9)),rep("moderate",100)),
+                                        cbind(matrixStats::colQuantiles(newdata_AN_pred[,,3],probs=c(0.1,0.5,0.9)),rep("severe",100))))
+colnames(newdata_AN_pred1)<-c("low","estimate","high","stage") 
+newdata_AN_pred1$Anemia<-factor(newdata_AN_pred1$stage, levels=levels(HIES_personid$anemia_status)[1:4])
+newdata_AN_pred1$sageyears<-newdata_AN$sageyears
+newdata_AN_pred1$age<-(newdata_AN$sageyears*(2*sd(HIES_personid$age,na.rm=T)))+mean(HIES_personid$age,na.rm=T)
+an_cond_fig1_clean<-ggplot(newdata_AN_pred1,aes(y= as.numeric(estimate),x=age,ymax=as.numeric(high),ymin=as.numeric(low),group=Anemia))+geom_ribbon(aes(fill=Anemia),alpha=0.5)+geom_line(aes(col=Anemia))+xlab ("Age (years)")+ylab ("Probability")+scale_fill_brewer(palette = "Reds")+scale_color_brewer(palette = "Reds")+theme_classic()
+
+
+#do posterior predicive figure__________________________________________________
+windows()
+ggarrange(bp_pp_fig, obes_pp_fig,an_pp_fig,glu_pp_fig,chol_pp_fig,tri_pp_fig,diab_pp_fig)
+
+#do fixed effect figure_________________________________________________________
+annotate_figure(ggarrange(
+          obes_fixef_fig+theme(panel.background = element_rect(fill="white",colour = "black"))+xlab("")+scale_y_discrete(labels=c("sageyears"="Age",
+                                                                                                                                "sexMale"="Males"))+ ggtitle("BMI classification"),
+          an_fixef_fig+theme(panel.background = element_rect(fill="white",colour = "black"),axis.text.y = element_blank())+xlab(""),
+          bp_fixef_fig+theme(panel.background = element_rect(fill="white",colour = "black"),axis.text.y = element_blank())+xlab(""), 
+          glu_fixef_fig+theme(panel.background = element_rect(fill="white",colour = "black"),axis.text.y = element_blank())+xlab(""),
+          chol_fixef_fig+theme(panel.background = element_rect(fill="white",colour = "black"),axis.text.y = element_blank())+xlab(""),
+          tri_fixef_fig+theme(panel.background = element_rect(fill="white",colour = "black"),axis.text.y = element_blank())+xlab(""),
+          diab_fixef_fig+theme(panel.background = element_rect(fill="white",colour = "black"),axis.text.y = element_blank())+xlab(""),nrow=1,ncol=7,widths = c(1.2,rep(1,6)), labels=c("a","b","c","d","e","f","g")),bottom="Effect size")
+
+
+#supplementary figure
+plot(conditional_effects(an_model_sexage, categorical=T, effects="smoked_last7days"), plot = FALSE)[[1]] +
+  theme_classic()+xlab("Smoking category")+scale_colour_brewer("Anemia",palette = "Reds")+guides(fill=F)
+
+#supplementary figure
+ggarrange(plot(conditional_effects(obes_model_sexage, categorical=T, effects="sex"), plot = FALSE)[[1]] +
+  theme_classic()+xlab("Sex")+scale_colour_brewer("BMI classification",palette = "Reds")+guides(fill=F),
+  plot(conditional_effects(an_model_sexage, categorical=T, effects="sex"), plot = FALSE)[[1]] +
+    theme_classic()+xlab("Sex")+scale_colour_brewer("Anemia",palette = "Reds")+guides(fill=F),
+  plot(conditional_effects(bp_model_sexage, categorical=T, effects="gender_corrected"), plot = FALSE)[[1]] +
+    theme_classic()+xlab("Sex")+scale_colour_brewer("Hypertension",palette = "Reds")+guides(fill=F),
+  plot(conditional_effects(glu_model_sexage,  effects="gender_corrected"), plot = FALSE)[[1]] +
+    theme_classic()+xlab("Sex")+ylab("Probability of hyperglycemia")+guides(fill=F),
+  plot(conditional_effects(chol_model_sexage, effects="gender_corrected"), plot = FALSE)[[1]] +
+    theme_classic()+xlab("Sex")+ylab("Probability of hypercholesterodemia")+guides(fill=F),
+  plot(conditional_effects(tri_model_sexage, categorical=T, effects="gender_corrected"), plot = FALSE)[[1]] +
+    theme_classic()+xlab("Sex")+scale_colour_brewer("Hypertriglyceridemia",palette = "Reds")+guides(fill=F),
+  plot(conditional_effects(diab_model_sexage, categorical=T, effects="gender_corrected"), plot = FALSE)[[1]] +
+    theme_classic()+xlab("Sex")+scale_colour_brewer("Diabetes",palette = "Reds")+guides(fill=F), labels=c("a","b","c","d","e","f","g"), nrow=2,ncol=4)
+
+#do age figure
+ggarrange(obes_cond_fig1_clean,bp_cond_fig1_clean, tri_cond_fig1_clean,diab_cond_fig1_clean,nrow=2,ncol=2,labels=c("a","b","c","d"))
+ggarrange(an_cond_fig1_clean,glu_cond_fig1_clean, chol_cond_fig1_clean,nrow=1,ncol=3,labels=c("a","b","c"), widths=c(1.4,1,1))
+
+#hierarchical variance_________________________________________________________
+
+variance_decomp<-as.data.frame(cbind(rbind(matrixStats::colMedians(as.matrix((as.data.frame(obes_model_sexage)[,8:10])^2)),
+                                           matrixStats::colMedians(as.matrix((as.data.frame(an_model_sexage)[,8:10])^2)),
+                                           matrixStats::colMedians(as.matrix((as.data.frame(bp_model_sexage)[,7:9])^2)),
+                                           matrixStats::colMedians(as.matrix((as.data.frame(glu_model_sexage)[,4:6])^2)),
+                                           matrixStats::colMedians(as.matrix((as.data.frame(chol_model_sexage)[,4:6])^2)),
+                                           matrixStats::colMedians(as.matrix((as.data.frame(tri_model_sexage)[,7:9])^2)),
+                                           matrixStats::colMedians(as.matrix((as.data.frame(diab_model_sexage)[,5:7])^2))),
+                                     c("BMI classification","Anemia","Hypertension","Hyperglycemia","Hypercholesterolemia","Hypertriglyceridemia","Diabetes")))
+colnames(variance_decomp)<-c("Among islands","Among communities","Among households","variable")
+variance_decomp %>%tidyr::gather(level,variance,-variable)
+windows()
+ggplot(variance_decomp %>%tidyr::gather(level,variance,-variable),aes(x=factor(variable, levels=c("BMI classification","Anemia","Hypertension","Hyperglycemia","Hypercholesterolemia","Hypertriglyceridemia","Diabetes")),y=as.numeric(variance),fill=factor(level,levels=c("Among islands","Among communities","Among households"))))+geom_bar(position="stack",stat="identity")+theme(axis.text.x = element_text(angle=90,vjust=0),panel.background = element_rect(color="black",fill="white"))+xlab("")+ylab("Median variance")+scale_fill_brewer("",palette=1)
+#_______________________________________________________________________________
+#observed summaries per island,
+#first get sample sizes per island to order based on pop size (Assuming samples are proportional)
+island_samples<-HIES_personid %>%select(island2,hhld_id_hm_basic__id) %>%group_by(island2)%>%dplyr::summarize (n=length(hhld_id_hm_basic__id))%>%arrange(desc(n))
+
+island_samples<-read.csv("pop_size_islands.CSV")
+island_samples$n <- as.numeric(gsub(",","",island_samples$n))
+summary(kiri_data_clean$diabetes_status)
+kiri_data_island<-kiri_data_clean %>%  
+group_by(island_corrected)%>% dplyr::summarize(bp_n=length(island_corrected[!(BloodPressure_status=="NA"|is.na(BloodPressure_status))&!ageyears_corrected<18]),
+                                               glu_n=length(island_corrected[!(Glucose_status=="NA"|is.na(Glucose_status))&!ageyears_corrected<18]),
+                                               cho_n=length(island_corrected[!(cholesterol_status=="NA"|is.na(cholesterol_status)|cholesterol_status=="Age under 12")&!ageyears_corrected<18]),
+                                               tri_n=length(island_corrected[!(triglycerides_status=="NA"|is.na(triglycerides_status)|triglycerides_status=="Age under 12")&!ageyears_corrected<18]),
+                                               diab_n=length(island_corrected[!(diabetes_status=="NA"|is.na(diabetes_status)|diabetes_status=="Age under 12")&!ageyears_corrected<18]))
+                                                           
+kiri_data_island$island2<-as.factor(ifelse(kiri_data_island$island_corrected=="Tabiteuea South","South Tabiteuea",ifelse(kiri_data_island$island_corrected=="Tabiteuea North","North Tabiteuea",as.character(kiri_data_island$island_corrected))))
+kiri_data_island<-merge(kiri_data_island,island_samples, all.x=T, by="island2")
+
+bp_tab<-kiri_data_clean %>% 
+  filter(!(BloodPressure_status=="NA"|is.na(BloodPressure_status))&!ageyears_corrected<18) %>% 
+  group_by(BloodPressure_status,island_corrected) %>%
+  select(BloodPressure_status)%>%count()
+bp_tab<-merge(bp_tab,kiri_data_island[,c("island_corrected","island2","bp_n", "n")],all.x=T,by="island_corrected")
+bp_tab$perc<-(bp_tab$freq*100)/bp_tab$bp_n
+knitr::kable(bp_tab)
+
+
+bp_fig<-ggplot(bp_tab,aes(x=perc,y=reorder(island2,n),fill=BloodPressure_status))+geom_bar(stat="identity", width=.5, position = "stack",alpha=0.7,col="black")+xlab("Percent population")+ylab("")+scale_fill_brewer("",palette = "Reds")+
+  ggtitle(paste("Hypertension (n= ",nrow(kiri_data_clean [!(kiri_data_clean$BloodPressure_status=="NA"|is.na(kiri_data_clean$BloodPressure_status))&!kiri_data_clean$ageyears_corrected<18,]),")"))+theme(legend.position='bottom', panel.background = element_rect(fill="white",color="black"))+guides(fill=guide_legend(nrow=3,byrow=TRUE))
+glu_tab<-kiri_data_clean %>% 
+  filter(!(Glucose_status=="NA"|is.na(Glucose_status))&!ageyears_corrected<18) %>% 
+  group_by(Glucose_status,island_corrected) %>%
+  select(Glucose_status)%>%count()
+glu_tab<-merge(glu_tab,kiri_data_island[,c("island_corrected","glu_n","island2", "n")],all.x=T,by="island_corrected")
+glu_tab$perc<-(glu_tab$freq*100)/glu_tab$glu_n
+knitr::kable(glu_tab)
+
+glu_fig<-ggplot(glu_tab,aes(x=perc,y=reorder(island2,n),fill=Glucose_status))+geom_bar(stat="identity", width=.5, position = "stack",alpha=0.7,col="black")+xlab("Percent population")+ylab("")+scale_fill_brewer("",palette = "Reds")+
+  ggtitle(paste("Hyperglycemia (n= ",nrow(kiri_data_clean [!(kiri_data_clean$Glucose_status=="NA"|is.na(kiri_data_clean$Glucose_status))&!kiri_data_clean$ageyears_corrected<18,]),")"))+theme(axis.text.y = element_blank(), legend.position='bottom', panel.background = element_rect(fill="white",color="black"))+guides(fill=guide_legend(nrow=3,byrow=TRUE))
+
+cho_tab<-kiri_data_clean %>% 
+  filter(!(cholesterol_status=="NA"|is.na(cholesterol_status)|cholesterol_status=="Age under 12")&!ageyears_corrected<18) %>% 
+  group_by(cholesterol_status,island_corrected) %>%
+  select(cholesterol_status)%>%count()
+cho_tab<-merge(cho_tab,kiri_data_island[,c("island_corrected","cho_n","island2", "n")],all.x=T,by="island_corrected")
+cho_tab$perc<-(cho_tab$freq*100)/cho_tab$cho_n
+knitr::kable(cho_tab)
+
+cho_fig<-ggplot(cho_tab,aes(x=perc,y=reorder(island2,n),fill=cholesterol_status))+geom_bar(stat="identity", width=.5, position = "stack",alpha=0.7,col="black")+xlab("Percent population")+ylab("")+scale_fill_brewer("",palette = "Reds")+
+  ggtitle(paste("Hypercholesterolemia (n= ",nrow(kiri_data_clean [!(kiri_data_clean$cholesterol_status=="NA"|is.na(kiri_data_clean$cholesterol_status))&!kiri_data_clean$ageyears_corrected<18,]),")"))+theme(axis.text.y = element_blank(),legend.position='bottom', panel.background = element_rect(fill="white",color="black"))+guides(fill=guide_legend(nrow=3,byrow=TRUE))
+
+
+diab_tab<-kiri_data_clean %>% 
+  filter(!(diabetes_status=="NA"|is.na(diabetes_status)|diabetes_status=="Age under 12")&!ageyears_corrected<18) %>% 
+  group_by(diabetes_status,island_corrected) %>%
+  select(diabetes_status)%>%count()
+diab_tab<-merge(diab_tab,kiri_data_island[,c("island_corrected","diab_n","island2", "n")],all.x=T,by="island_corrected")
+diab_tab$perc<-(diab_tab$freq*100)/diab_tab$diab_n
+knitr::kable(diab_tab)
+
+diab_fig<-ggplot(diab_tab,aes(x=perc,y=reorder(island2,n),fill=diabetes_status))+geom_bar(stat="identity", width=.5, position = "stack",alpha=0.7,col="black")+xlab("Percent population")+ylab("")+scale_fill_brewer("",palette = "Reds")+
+  ggtitle(paste("Diabetes (n= ",nrow(kiri_data_clean [!(kiri_data_clean$diabetes_status=="NA"|is.na(kiri_data_clean$diabetes_status))&!kiri_data_clean$ageyears_corrected<18,]),")"))+theme(axis.text.y = element_blank(),legend.position='bottom', panel.background = element_rect(fill="white",color="black"))+guides(fill=guide_legend(nrow=3,byrow=TRUE))
+
+tri_tab<-kiri_data_clean %>% 
+  filter(!(triglycerides_status=="NA"|is.na(triglycerides_status)|triglycerides_status=="Age under 12")&!ageyears_corrected<18) %>% 
+  group_by(triglycerides_status,island_corrected) %>%
+  select(triglycerides_status)%>%count()
+tri_tab<-merge(tri_tab,kiri_data_island[,c("island_corrected","tri_n","island2", "n")],all.x=T,by="island_corrected")
+tri_tab$perc<-(tri_tab$freq*100)/tri_tab$tri_n
+knitr::kable(tri_tab)
+
+tri_fig<-ggplot(tri_tab,aes(x=perc,y=reorder(island2,n),fill=triglycerides_status))+geom_bar(stat="identity", width=.5, position = "stack",alpha=0.7,col="black")+xlab("Percent population")+ylab("")+scale_fill_brewer("",palette = "Reds")+
+  ggtitle(paste("Hypertriglyceridemia (n= ",nrow(kiri_data_clean [!(kiri_data_clean$triglycerides_status=="NA"|is.na(kiri_data_clean$triglycerides_status))&!kiri_data_clean$ageyears_corrected<18,]),")"))+theme(axis.text.y = element_blank(),legend.position='bottom', panel.background = element_rect(fill="white",color="black"))+guides(fill=guide_legend(nrow=3,byrow=TRUE))
+windows()
+ggarrange(bp_fig,glu_fig,cho_fig,tri_fig,diab_fig,nrow=1,ncol=5,widths = c(1.5,1,1,1,1), labels=c("c","d","e","f","g"))
+
+
+#___________
+summary(HIES_personid$bmi_cat )
+HIES_island<-HIES_personid %>%  
+  group_by(island2)%>% dplyr::summarize(an_n=length(island2[!(anemia_status=="NA"|is.na(anemia_status)|anemia_status=="over 50")&!age<18]),
+                                                 obes_n=length(island2[!(bmi_cat=="NA"|is.na(bmi_cat)|bmi_cat=="Age under 18")&!age<18]))
+HIES_island$island_try<-as.factor(ifelse(HIES_island$island2=="Tabiteuea North","North Tabiteuea",as.character(HIES_island$island2)))
+
+HIES_island<-merge(HIES_island,island_samples, all.x=T, by.y="island2",by.x="island_try")
+
+obes_tab<-HIES_personid %>% 
+  filter(!(bmi_cat=="NA"|is.na(bmi_cat)|bmi_cat=="Age under 18")&!age<18) %>% 
+  group_by(bmi_cat,island2) %>%
+  select(bmi_cat)%>%count()
+obes_tab<-merge(obes_tab,HIES_island[,c("island2","obes_n","n")],all.x=T,by="island2")
+obes_tab$perc<-(obes_tab$freq*100)/obes_tab$obes_n
+obes_fig<-ggplot(obes_tab,aes(x=perc,y=reorder(island2,n),fill=bmi_cat))+geom_bar(stat="identity", width=.5, position = "stack",alpha=0.7,col="black")+xlab("Percent population")+ylab("")+scale_fill_brewer("",palette = "Reds")+
+  ggtitle(paste("Body mass index classification (n= ",nrow(HIES_personid [!(HIES_personid$bmi_cat=="NA"|is.na(HIES_personid$bmi_cat))&!HIES_personid$age<18,]),")"))+theme(legend.position='bottom', panel.background = element_rect(fill="white",color="black"))+guides(fill=guide_legend(nrow=2,byrow=TRUE))
+
+an_tab<-HIES_personid %>% 
+  filter(!(anemia_status=="NA"|is.na(anemia_status)|anemia_status=="over 50")&!age<18) %>% 
+  group_by(anemia_status,island2) %>%
+  select(anemia_status)%>%count()
+an_tab<-merge(an_tab,HIES_island[,c("island2","an_n","n")],all.x=T)
+an_tab$perc<-(an_tab$freq*100)/an_tab$an_n
+an_fig<-ggplot(an_tab,aes(x=perc,y=reorder(island2,n),fill=anemia_status))+geom_bar(stat="identity", width=.5, position = "stack",alpha=0.7,col="black")+xlab("Percent population")+ylab("")+scale_fill_brewer("",palette = "Reds")+
+  ggtitle(paste("Anemia (n= ",nrow(HIES_personid [!(HIES_personid$anemia_status=="NA"|is.na(HIES_personid$anemia_status))&!HIES_personid$age<18,]),")"))+theme(axis.text.y=element_blank(), legend.position='bottom', panel.background = element_rect(fill="white",color="black"))+guides(fill=guide_legend(nrow=2,byrow=TRUE))
+windows()
+ggarrange(obes_fig,an_fig, labels=c("a","b"), widths=c(1.2,1))
+
+
+#_______________________________________________________________________________
+
+#stuniting,wasting,underweight: ask simone/Chris how they calculated 
+#Other than age, there five anthropometric/growth variables present within health.dta:  P301 (Height (cm)) (Simone assumed that this was length for children aged less than 24 months), P302 (Weight (kg)), P302a (Head Circumference (cm)), P302b (Mid-Upper Arm Circumference (cm)), P302c_measure1 (Abdominal Circumference (cm))
+library(anthro)
+?anthro_zscores
+HIES_personid <- HIES_personid %>% 
+ mutate(sexbin=recode(sex, "Male" = 1, "Female" = 2),
+      age_months=age*12)
+
+anthro_under5<-HIES_personid %>% 
+            filter(age_months < 60)  %>%  
+            select(p301, p302, p302a, p302b, sexbin, age_months, hhld_id_hm_basic__id)
+anthro_under5 <- within(anthro_under5, anthro_under5 <- anthro_zscores(
+            sex = sexbin, age=age_months, 
+            is_age_in_month = TRUE,
+            lenhei = p301, weight=p302, headc=p302a, armc=p302b))
+           
+          anthro_under5$zlen<-anthro_under5$anthro_under5$zlen
+          anthro_under5$zwei<-anthro_under5$anthro_under5$zwei
+          anthro_under5$zwfl<-anthro_under5$anthro_under5$zwfl
+          anthro_under5$zbmi<-anthro_under5$anthro_under5$zbmi
+          anthro_under5$zac<-anthro_under5$anthro_under5$zac
+          anthro_under5$zhc<-anthro_under5$anthro_under5$zhc
+          
+          anthro_under5<-anthro_under5%>%select(p301,zlen, zwei, zbmi, zwfl, zac, zhc, sexbin,age_months, hhld_id_hm_basic__id)
+#claculate stunting/wasting and underweight for individuals below 5 
+anthro_under5<-anthro_under5 %>%
+          #height for age
+          mutate(stunted_under5 = case_when(zlen < -3 ~ "Severe Stunting",
+                             zlen < -2 & zlen >=-3 ~ "Moderate Stunting",
+                             zlen >= -2 ~ "Not stunted",
+                             TRUE ~ NA_character_),
+         #weight for height
+         wasted_under5 = case_when(zwfl < -3 ~ "Severe Wasting",
+                             zwfl < -2 & zwfl >=-3 ~ "Moderate Wasting",
+                             zwfl >= -2 & zwfl<2 ~ "Not wasted",
+                              zwfl >= 2 ~ "Overweight",
+                             TRUE ~ NA_character_),
+         #weight for age
+         underweight_under5 = case_when(zwei < -3 ~ "Severe Underweight",
+                             zwei < -2 & zwei>=-3 ~ "Moderate Underweight",
+                             zwei >= -2 ~ "Not underweight",
+                             TRUE ~ NA_character_),
+        #Thresholded children have a z-score that meets any of the following criteria. 
+       #Criteria:
+       #|WAZ| > 6 or
+       #|HAZ| > 6 or
+       #|BMIZ| > 5 or
+       #|MUACZ| > 5 or
+       #|HEADZ| > 5 or
+       #|WFLZ| > 5
+         flagged_under5= case_when (abs(zhc) > 5 | abs(zac) > 5 | abs(zbmi) > 5 | abs(zwei) > 6 | abs(zlen) > 6 | abs(zwfl) > 5~"Yes",
+        abs(zhc) < 5 & abs(zac) < 5 &  abs(zbmi) < 5 &  abs(zwei) < 6 &  abs(zlen) < 6 &  abs(zwfl) < 5~"No",
+                             TRUE ~ NA_character_)) 
+
+summary(as.factor(anthro_under5$wasted_under5))
+summary(as.factor(anthro_under5$flagged_under5))
+
+#merge with HIES data
+HIES_personid<-merge(HIES_personid,anthro_under5[,c("stunted_under5","wasted_under5","underweight_under5","flagged_under5","hhld_id_hm_basic__id")],by="hhld_id_hm_basic__id",all.x=T)
+
+#sumamry stats
+length(HIES_personid$stunted_under5[!is.na(HIES_personid$stunted_under5)&HIES_personid$flagged_under5=="No"])
+length(HIES_personid$wasted_under5[!is.na(HIES_personid$wasted_under5)&HIES_personid$flagged_under5=="No"])
+length(HIES_personid$underweight_under5[!is.na(HIES_personid$underweight_under5)&HIES_personid$flagged_under5=="No"])
+length(HIES_personid$stunted_under5[!is.na(HIES_personid$stunted_under5)&(HIES_personid$stunted_under5=="Moderate Stunting"|HIES_personid$stunted_under5=="Severe Stunting")&HIES_personid$flagged_under5=="No"])/length(HIES_personid$stunted_under5[!is.na(HIES_personid$stunted_under5)&HIES_personid$flagged_under5=="No"])
+length(HIES_personid$wasted_under5[!(is.na(HIES_personid$wasted_under5)|HIES_personid$wasted_under5=="Not wasted")&HIES_personid$flagged_under5=="No"])/length(HIES_personid$wasted_under5[!is.na(HIES_personid$wasted_under5)&HIES_personid$flagged_under5=="No"])
+
+## Anthros for Individuals > 60 Months Old
+library(zscorer)
+anthro_above5<-HIES_personid %>% 
+           mutate(dol=age*365.25) %>%
+            filter(age_months > 60, age_months < 228)      %>%     
+            tidyr::drop_na(p301)
+         ?addWGSR()
+         #height for age
+          anthro_above5$haz <- addWGSR(data = anthro_above5,
+                                   sex = "sexbin",
+                                   firstPart = "p301",
+                                   secondPart = "dol",
+                                   index = "hfa")
+          anthro_above5$zlen<-anthro_above5$haz$hfaz
+          anthro_above5$fhaz<-ifelse(abs(anthro_above5$zlen) > 6,1,0)
+          anthro_above5<-anthro_above5 %>%
+            mutate(
+              fhaz = recode(fhaz, "0" = "|HAZ|<6", "1" = "|HAZ|>6"))
+          #weight for height (bmi)
+          ?addWGSR
+          anthro_above5$bmiz <- addWGSR(data = anthro_above5,
+                                   sex = "sexbin",
+                                   firstPart = "p302",
+                                   secondPart = "p301",
+                                   thirdPart = "dol",
+                                   index = "bfa")
+          
+          anthro_above5$zbmi<-anthro_above5$bmiz$bfaz #bmi for age z score
+          anthro_above5$fbmi<-ifelse(abs(anthro_above5$zbmi) > 5,1,0)
+          anthro_above5$cbmi<-anthro_above5$p302/((anthro_above5$p301/100)^2)
+          anthro_above5<-anthro_above5 %>%
+            mutate(
+              fbmi = recode(fbmi, "0" = "|BMIZ|<5", "1" = "|BMIZ|>5"))
+         #mid upper circunference (dataset is very sparse for ages >5 (N=1745), and no measurements for MUAC exist for ages above 12)
+          anthro_above5$muacz <- addWGSR(data = anthro_above5,
+                                 sex = "sexbin",
+                                 firstPart = "p302b",
+                                 secondPart = "dol",
+                                 index = "mfa")
+          anthro_above5$zmuac<-anthro_above5$muacz$mfaz
+          anthro_above5$fmuac<-ifelse(abs(anthro_above5$zmuac) > 5,1,0)
+          anthro_above5<-anthro_above5 %>%
+            mutate(
+              fmuac = recode(fmuac,"0" = "|MUAC|<5", "1" = "|MUAC|>5"))
+         #abdominal circunference
+        library(childsds)
+?sds
+         anthro_above5$wcz <- sds(anthro_above5$p302c,
+                              age = anthro_above5$age,
+                              sex = anthro_above5$sexbin, male = "1", female =  "2",
+                              ref = us.ref,
+                              item = "wc_sharma",#Sharma et al 2015
+                              type = "SDS")
+          anthro_above5$fwcz<-ifelse(abs(anthro_above5$wcz) > 5,1,0)
+          anthro_above5<-anthro_above5 %>%
+            mutate(
+              fwcz = recode(fwcz,"0" = "|WCZ|<5", "1" = "|WCZ|>5"))
+          anthro_above5$flagged_over5<-ifelse((abs(anthro_above5$zmuac) > 5 | abs(anthro_above5$zbmi) > 5 | abs(anthro_above5$zlen) > 6 |  abs(anthro_above5$wcz) > 5),"Yes","NAorNo")
+    #mutate here to add obese and overweight potentially!!!!!!!!
+
+          anthro_above5<-anthro_above5  %>%   mutate(
+            # Calculate age groups
+            bmi_cat_above5 = case_when(
+              (zbmi<=-3) ~ "extreme thinness",
+              (zbmi <=-2 & zbmi > -3) ~ "thinness",
+              (zbmi <=1 & zbmi > -2) ~ "normal weight",
+              (zbmi > 1 & zbmi < 2) ~ "overweight",
+              (zbmi >=2) ~ "obesity"))
+    
+
+
+#merge with HIES data
+HIES_personid<-merge(HIES_personid,anthro_above5[,c("bmi_cat_above5","hhld_id_hm_basic__id")],by="hhld_id_hm_basic__id",all.x=T)
+
+#sumamry stats
+summary(as.factor(anthro_above5$flagged_over5))
+length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)])
+length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)&(HIES_personid$bmi_cat_above5=="extreme thinness"|HIES_personid$bmi_cat_above5=="thinness")])/length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)])
+length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)&(HIES_personid$bmi_cat_above5=="normal weight")])/length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)])
+length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)&(HIES_personid$bmi_cat_above5=="overweight")])/length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)])
+length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)&(HIES_personid$bmi_cat_above5=="obesity")])/length(HIES_personid$bmi_cat_above5[!is.na(HIES_personid$bmi_cat_above5)])
+
+#_______________________________________________________________________________
+#summary stats for table 1
+HIES_personid %>% filter(!is.na(bmi_cat)|!bmi_cat=="NA"|!is.na(bmi_cat_above5)|!is.na(stunted_under5)) %>% dplyr::summarize (n_islands=length(unique(island2)),
+                                                                                                              n_communities=length(unique(community_island)),
+                                                                                                              n=length(age))
+HIES_personid %>% filter(!is.na(anemia_status)|!anemia_status=="NA") %>% dplyr::summarize (n_islands=length(unique(island2)),
+                                                                                                                             n_communities=length(unique(community_island)),
+                                                                                                                             n=length(age))
+
+
+kiri_data_clean %>% filter(!is.na(glucose_corrected)) %>% dplyr::summarize (n_islands=length(unique(island_corrected)),
+                                                                                           n_communities=length(unique(community_island)),
+                                                                                           n=length(ageyears_corrected))
+kiri_data_clean %>% filter(!is.na(diabetes_corrected)) %>% dplyr::summarize (n_islands=length(unique(island_corrected)),
+                                                                            n_communities=length(unique(community_island)),
+                                                                            n=length(ageyears_corrected))
+
+kiri_data_clean %>% filter(!is.na(BloodPressure_status)|!BloodPressure_status=="NA") %>% dplyr::summarize (n_islands=length(unique(island_corrected)),
+                                                                             n_communities=length(unique(community_island)),
+                                                                             n=length(ageyears_corrected))
+kiri_data_clean %>% filter(!is.na(triglycerides_corrected)) %>% dplyr::summarize (n_islands=length(unique(island_corrected)),
+                                                                             n_communities=length(unique(community_island)),
+                                                                             n=length(ageyears_corrected))
+kiri_data_clean %>% filter(!is.na(cholesterol_status)|!cholesterol_status=="NA") %>% dplyr::summarize (n_islands=length(unique(island_corrected)),
+                                                                                  n_communities=length(unique(community_island)),
+                                                                                  n=length(ageyears_corrected))
+#_______________________________________________________________________________
+#summary stats for table 2
+
+#bmi
+HIES_personid %>% filter(!(is.na(bmi_cat)|bmi_cat=="NA"|bmi_cat=="Age under 18")) %>% dplyr::summarize (mean_age=mean(age),
+                                                                               sd_age=sd(age),
+                                                                               perc_fem=length(sex[sex=="Female"])/length(sex), n=length(bmi_cat))
+HIES_personid %>% filter(!(is.na(bmi_cat)|bmi_cat=="NA"|bmi_cat=="Age under 18") )%>% group_by(bmi_cat) %>%select(bmi_cat)%>% count() %>%mutate(perc=freq/6253)
+
+#anemia
+HIES_personid %>% filter(!(is.na(anemia_status)|anemia_status=="NA"|anemia_status=="over 50")) %>% dplyr::summarize (mean_age=mean(age),
+                                                                                                        sd_age=sd(age),
+                                                                                                        perc_fem=length(sex[sex=="Female"])/length(sex), n=length(anemia_status))
+HIES_personid %>% filter(!(is.na(anemia_status)|anemia_status=="NA"|anemia_status=="over 50") )%>% group_by(anemia_status) %>%select(anemia_status)%>% count() %>%mutate(perc=freq/9007)
+
+
+#cholesterol
+kiri_data_clean %>% 
+  filter(!(cholesterol_status=="NA"|is.na(cholesterol_status)|cholesterol_status=="Age under 12")) %>% summarize(mean_age=mean(ageyears_corrected),sd_age=sd(ageyears_corrected),
+                                                                      perc_fem=length(gender_corrected[gender_corrected=="F"])/length(gender_corrected),
+                                                                      n=length(cholesterol_status))
+kiri_data_clean %>% 
+  filter(!(cholesterol_status=="NA"|is.na(cholesterol_status)|cholesterol_status=="Age under 12")) %>% group_by(cholesterol_status) %>%select(cholesterol_status)%>% count() %>%mutate(perc=freq/696)
+
+#glucose
+kiri_data_clean %>% 
+  filter(!(Glucose_status=="NA"|is.na(Glucose_status))) %>% summarize(mean_age=mean(ageyears_corrected),sd_age=sd(ageyears_corrected),
+                                                                                  perc_fem=length(gender_corrected[gender_corrected=="F"])/length(gender_corrected),
+                                                                                  n=length(Glucose_status))
+kiri_data_clean %>% 
+  filter(!(Glucose_status=="NA"|is.na(Glucose_status))) %>% group_by(Glucose_status) %>%select(Glucose_status)%>% count() %>%mutate(perc=freq/811)
+
+#triglicerids
+kiri_data_clean %>% 
+  filter(!(triglycerides_status=="NA"|is.na(triglycerides_status)|triglycerides_status=="Age under 12")) %>% summarize(mean_age=mean(ageyears_corrected),sd_age=sd(ageyears_corrected),
+                                                                      perc_fem=length(gender_corrected[gender_corrected=="F"])/length(gender_corrected),
+                                                                      n=length(triglycerides_status))
+kiri_data_clean %>% 
+  filter(!(triglycerides_status=="NA"|is.na(triglycerides_status)|triglycerides_status=="Age under 12")) %>% group_by(triglycerides_status) %>%select(triglycerides_status)%>% count() %>%mutate(perc=freq/693)
+
+#diabetes
+kiri_data_clean %>% 
+  filter(!(diabetes_status=="NA"|is.na(diabetes_status)|diabetes_status=="Age under 12")) %>% summarize(mean_age=mean(ageyears_corrected),sd_age=sd(ageyears_corrected),
+                                                                                                                       perc_fem=length(gender_corrected[gender_corrected=="F"])/length(gender_corrected),
+                                                                                                                       n=length(diabetes_status))
+kiri_data_clean %>% 
+  filter(!(diabetes_status=="NA"|is.na(diabetes_status)|diabetes_status=="Age under 12")) %>% group_by(diabetes_status) %>%select(diabetes_status)%>% count() %>%mutate(perc=freq/572)
+
+#blood pressure
+kiri_data_clean %>% 
+  filter(!(BloodPressure_status=="NA"|is.na(BloodPressure_status))) %>% summarize(mean_age=mean(ageyears_corrected),sd_age=sd(ageyears_corrected),
+                                                                                  perc_fem=length(gender_corrected[gender_corrected=="F"])/length(gender_corrected),
+                                                                                  n=length(BloodPressure_status))
+kiri_data_clean %>% 
+  filter(!(BloodPressure_status=="NA"|is.na(BloodPressure_status))) %>% group_by(BloodPressure_status) %>%select(BloodPressure_status)%>% count() %>%mutate(perc=freq/750)
+
+kiri_data_clean %>% filter(!is.na(BloodPressure_status)|!BloodPressure_status=="NA") %>% dplyr::summarize (n_islands=length(unique(island_corrected)),
+                                                                                                           n_communities=length(unique(community_island)),
+                                                                                                           n=length(ageyears_corrected))
+kiri_data_clean %>% filter(!is.na(triglycerides_corrected)) %>% dplyr::summarize (n_islands=length(unique(island_corrected)),
+                                                                                  n_communities=length(unique(community_island)),
+                                                                                  n=length(ageyears_corrected))
+kiri_data_clean %>% filter(!is.na(cholesterol_status)|!cholesterol_status=="NA") %>% dplyr::summarize (n_islands=length(unique(island_corrected)),
+                                                                                                       n_communities=length(unique(community_island)),
+                                                                                                       n=length(ageyears_corrected))
+################################################################################
+
+
+#save.image(file='kiribati_biomarkers.RData')
+#load(file='kiribati_biomarkers.RData')
+grateful::cite_packages(out.dir = ".") 
+
+################################################################################
+################################################################################
+# New code from Heather ---------------------------------------------------
+################################################################################
+################################################################################
+
+#load packages
+library(tidyverse)
+library(anthro)
+library(anthroplus)
+
+########################################################################################
+
+# Adult BMI
+
+# to do: use age_years_corrected to get over 18 estimate
+
+HIES_personid$bmi<- HIES_personid$p302 / ((HIES_personid$p301/100)^2 )
+HIES_personid$bmi<-ifelse(is.infinite(HIES_personid$bmi),NA,HIES_personid$bmi)
+
+# check if this matches what Jessica is getting above
+# summary(HIES_personid$bmi)
+
+# create variable for more than 18 years old
+HIES_personid$more_than_18 <- ifelse(HIES_personid$age >= 18, "yes", "no")
+
+#replace adult_bmi with NA if age under 18
+HIES_personid$adult_bmi <- replace(HIES_personid$bmi, HIES_personid$more_than_18 == "no", NA)
+
+# count of NA in adult_bmi variable to track changes (6171 NAs)
+HIES_personid %>% summarize(count_na = sum(is.na(adult_bmi)))
+
+# replace adult_bmi > 80.0 with NA # this is in line with what Simone did above
+HIES_personid$adult_bmi <- replace(HIES_personid$adult_bmi, HIES_personid$adult_bmi > 80.00, NA) 
+# count of NA in adult_bmi variable to track changes (6219, 48 changes made)
+HIES_personid %>% summarize(count_na = sum(is.na(adult_bmi)))
+
+
+# replace adult_bmi < 5.0 with NA # this is NOT in line with what Simone did above but I think we should not include values that seem unrealistically low such as 0
+HIES_personid$adult_bmi <- replace(HIES_personid $adult_bmi, HIES_personid $adult_bmi < 5.00, NA) 
+# count of NA in adult_bmi variable to track changes (6229, 10 changes made)
+HIES_personid  %>% summarize(count_na = sum(is.na(adult_bmi)))
+
+# summary for adult_bmi
+summary(HIES_personid$adult_bmi, na.rm = TRUE)
+sd(HIES_personid$adult_bmi, na.rm=TRUE)
+range(HIES_personid$adult_bmi, na.rm=TRUE)
+
+# summary for adult_bmi by sex
+by(HIES_personid$adult_bmi, HIES_personid$sex, summary)
+by(HIES_personid$adult_bmi, HIES_personid$sex, sd, na.rm=TRUE)
+by(HIES_personid$adult_bmi, HIES_personid$sex, range, na.rm=TRUE)
+
+# create variables for bmi categories
+
+# create variable low_adult_bmi
+HIES_personid$low_adult_bmi <- ifelse(HIES_personid$adult_bmi < 18.5, "yes", "no")
+# create variable overweight_adult_bmi
+HIES_personid$overweight_adult_bmi <- ifelse(HIES_personid$adult_bmi >= 25, "yes", "no")
+# create variable obese_adult_bmi
+HIES_personid$obese_adult_bmi <- ifelse(HIES_personid$adult_bmi >= 30, "yes", "no")
+
+# calculate adult_bmi category prevalence estimates
+
+# low_adult_bmi
+table(HIES_personid$low_adult_bmi) # sample size low
+round(prop.table(table(HIES_personid$low_adult_bmi)), 4) # prevalence low
+round(prop.table(table(HIES_personid$low_adult_bmi, HIES_personid$sex), margin = 2), 4) # by sex
+table(HIES_personid$low_adult_bmi, HIES_personid$sex) # count by sex
+
+# overweight_adult_bmi
+table(HIES_personid$overweight_adult_bmi) # sample size overweight
+round(prop.table(table(HIES_personid$overweight_adult_bmi)), 4) # prevalence overweight
+table(HIES_personid$overweight_adult_bmi, HIES_personid$sex) # by sex
+round(prop.table(table(HIES_personid$overweight_adult_bmi, HIES_personid$sex), margin = 2), 4) # prevalence overweight
+
+# obese_adult_bmi
+table(HIES_personid$obese_adult_bmi) # sample size overweight
+round(prop.table(table(HIES_personid$obese_adult_bmi)), 5) # prevalence obese
+round(prop.table(table(HIES_personid$obese_adult_bmi, HIES_personid$sex), margin = 2), 4) # by sex
+
+# healthy_adult_bmi
+# FYI: (100-(low_adult_bmi+overweight_adult_bmi)=health_weight_adult_bmi
+
+
+
+################################################################################
+
+# Adolescent BMI (5-19)
+
+#replace age_d_start less than 0 (there are some negative numbers for an unknown reason)
+HIES_personid$age_d_start <- replace(HIES_personid$age_d_start, HIES_personid$age_d_start < 0.00, NA)
+
+# create age in month variable (dividing working age days by average length of a month) because anthroplus necessitates age be in months
+HIES_personid$age_in_months <- HIES_personid$age_d_start/30.437 
+
+# Create needed sex = M/F variable for the anthro package
+HIES_personid$sex_abbreviation <- ifelse(HIES_personid$sex=="Male","M","F")
+
+# calculate adolescent BMI zscores using anthroplus package
+adolescent_bmi <- with(HIES_personid,
+                       anthroplus_zscores(
+                         sex = sex_abbreviation, age_in_months = age_in_months,
+                         weight_in_kg = p302, height_in_cm = p301))
+
+# calculate adolescent BMI prevalence using antrhoplus package
+adolescent_bmi_prev <- with(HIES_personid,
+                            anthroplus_prevalence(
+                              sex = sex_abbreviation, age_in_months = age_in_months,
+                              weight_in_kg = p302, height_in_cm = p301))
+
+
+################################################################################
+
+# Child BMI (0-5) (using HIES_personid first, then using book after)
+
+summary(HIES_personid$p301)
+# height
+summary(HIES_personid$p302) # weight
+summary(HIES_personid$age_d_start) # age in days?
+
+# move variables to be able to look at them 
+#HIES_personid <- HIES_personid %>% relocate(p301, .after=age_d_start)
+#HIES_personid <- HIES_personid %>% relocate(p302, .after=p301)
+
+# clean length variable
+# replace length = 0 with NA
+HIES_personid <- HIES_personid %>% replace_with_na(replace = list(p301 = 0.00))
+# replace length = 999.0 with NA
+HIES_personid <- HIES_personid  %>% replace_with_na(replace = list(p301 = 999.0))
+# replace length = 666.0 with NA
+HIES_personid  <- HIES_personid  %>% replace_with_na(replace = list(p301 = 666.0))
+# replace length < 35.0
+HIES_personid$p301 <- replace(HIES_personid$p301, HIES_personid$p301 < 35.0, NA)
+
+
+# use anthro package to create anthro measures and zscores
+anthro_working <- anthro_zscores(
+  sex = HIES_personid$sex_abbreviation,
+  age = HIES_personid$age_d_start, 
+  is_age_in_month = FALSE, # days
+  weight = HIES_personid$p302,
+  lenhei = HIES_personid$p301)
+
+# use antrho package to create anthro prevalences
+anthro_prev_working<- anthro_prevalence(
+  sex = HIES_personid$sex_abbreviation,
+  age = HIES_personid$age_d_start, # days
+  weight = HIES_personid$p302,
+  lenhei = HIES_personid$p301)
+
+# pull stunting estimates
+# Height-for-age (stunting)
+# extract prevalence estimates for <-3SD, <-2SD (stunting) # and the z-score mean
+col_names <- c("Group", "HAZ_unwpop", "HA_3_r", "HA_2_r", "HA_r", "HA_se", "HA_ll", "HA_ul")
+stunting_working <- anthro_prev_working[, col_names]
+
+#pull wasting estimates
+# Weight-for-height (wasting)
+# extract prevalence estimates for <-3SD, <-2SD (wasting) # and the z-score mean
+col_names <- c("Group", "WHZ_unwpop", "WH_3_r", "WH_2_r", "WH_r", "WH_se", "WA_ll", "WA_ul")
+wasting_working <- anthro_prev_working[, col_names]
+
+# calculate wasting and stunting with outliers included for comparison. This is using the data directly not using the anthro package code anthro_prevalence which removes outliers. I did this just to see. 
+#anthro_working$wasted <- ifelse(anthro_working$zwfl < -2, "yes", "no")
+#anthro_working$stunted <- ifelse(anthro_working$zlen< -2, "yes", "no")
+#prop.table(table(anthro_working$wasted))
+#prop.table(table(anthro_working$stunted))
+
+
+# Try with 'book' dataset -------------------------------------------------
+# this is the dataset shared by Mike
+
+# load book dataset
+book <- read_excel("/Users/heatherkelahan/Desktop/Kiribati/Book1.xlsx")
+
+# create a variable for age in days using the pieces of birth date and the start time of the survey
+book <- book %>%
+  mutate(birthday = make_date(birth_y, birth_m, birth_d))
+book$age_in_days <- as.numeric(difftime(book$start_pers_details, book$birthday, units = "days"))
+
+#replace age_d_start less than 0 (same as with the HIES_personid dataset there are a small number of negative numbers for some reason)
+book$age_in_days <- replace(book$age_in_days, book$age_in_days < 0.00, NA)
+
+# change height and weight variables to integers
+book$p301 <- as.numeric(book$p301)
+book$p302 <- as.numeric(book$p302)
+
+# clean length data
+# replace length = 0 with NA
+book <- book %>% replace_with_na(replace = list(p301 = 0.00))
+# replace length = 999.0 with NA
+book <- book  %>% replace_with_na(replace = list(p301 = 999.0))
+# replace length = 666.0 with NA
+book <- book  %>% replace_with_na(replace = list(p301 = 666.0))
+# replace length < 35.0
+book$p301 <- replace(book$p301, book$p301 < 35.0, NA)
+# count of NA in length variable to track changes (total NA = 6877, 46 changes made)
+book %>% summarize(count_na = sum(is.na(p301)))
+
+
+# Create needed sex = M/F variable for the anthro package
+book$sex_abbreviation <- ifelse(book$sex=="Male","M","F")
+
+# use anthro package to create anthro measures and zscores
+anthro_working_book <- anthro_zscores(
+  sex = book$sex_abbreviation,
+  age = book$age_in_days, 
+  is_age_in_month = FALSE, # days
+  weight = book$p302,
+  lenhei = book$p301)
+
+# use antrho package to create anthro prevalences
+anthro_prev_working_book <- anthro_prevalence(
+  sex = book$sex_abbreviation,
+  age = book$age_in_days, # days
+  weight = book$p302,
+  lenhei = book$p301)
+
+# pull stunting estimates
+# Height-for-age (stunting)
+# extract prevalence estimates for <-3SD, <-2SD (stunting) # and the z-score mean
+col_names <- c("Group", "HAZ_unwpop", "HA_3_r", "HA_2_r", "HA_r", "HA_se", "HA_ll", "HA_ul")
+stunting_working_book <- anthro_prev_working_book [, col_names]
+
+#pull wasting estimates
+# Weight-for-height (wasting)
+# extract prevalence estimates for <-3SD, <-2SD (wasting) # and the z-score mean
+col_names <- c("Group", "WHZ_unwpop", "WH_3_r", "WH_2_r", "WH_r", "WH_se", "WA_ll", "WA_ul")
+wasting_working_book <- anthro_prev_working_book [, col_names]
+
+
+
+################################################################################
+
+# Hypertension
+
+
+#Raised blood pressure is defined as systolic blood pressure equal to or greater than 140mmHg and/or diastolic blood pressure equal to or greater than 90mmHg (to match Global Nutrition Report and other sources)
+
+# create variable for more than 18 years old
+kiri_data_clean$more_than_18 <- ifelse(kiri_data_clean$ageyears_corrected >= 18, "yes", "no")
+
+# create variable for hypertension if either sys or dia blood pressure are over cutoff
+kiri_data_clean$hypertension <-ifelse(kiri_data_clean$systolic_corrected >=140, "yes", ifelse(kiri_data_clean$diastolic_corrected >=90, "yes", "no"))
+
+# create adult_hypertension with NA if age under 18
+kiri_data_clean$adult_hypertension <- replace(kiri_data_clean$hypertension, kiri_data_clean$more_than_18 == "no", NA)
+
+# estimates of adult_hypertension
+table(kiri_data_clean$adult_hypertension) # count overall
+table(kiri_data_clean$adult_hypertension, kiri_data_clean$gender_corrected) # count by sex
+round(prop.table(table(kiri_data_clean$adult_hypertension, kiri_data_clean$gender_corrected), margin = 2), 4) # percent
+
+
+# using 130/80 cutoff like Simone/Jessica code above. I would NOT call this hypertension. 
+
+# create variable for hypertension if either sys or dia blood pressure are over cutoff
+kiri_data_clean$stage_one_plus <-ifelse(kiri_data_clean$systolic_corrected >=130, "yes", ifelse(kiri_data_clean$diastolic_corrected >=80, "yes", "no"))
+
+kiri_data_clean$stage_one_plus <- replace(kiri_data_clean$stage_one_plus, kiri_data_clean$more_than_18 == "no", NA)
+
+# estimates of adult_stage_one_plus
+table(kiri_data_clean$stage_one_plus) # count overall
+table(kiri_data_clean$stage_one_plus, kiri_data_clean$gender_corrected) # count by sex
+round(prop.table(table(kiri_data_clean$stage_one_plus, kiri_data_clean$gender_corrected), margin = 2), 4) # percent
+
+# this results in similar estimates to what is currently in the paper. 
+
+
+
+################################################################################
+
+# Diabetes
+
+
+# create adult_diabetes_status with NA if age under 18
+kiri_data_clean$adult_diabetes_status <- replace(kiri_data_clean$diabetes_status, kiri_data_clean$more_than_18 == "no", NA)
+
+# estimates
+table(kiri_data_clean$adult_diabetes_status) #count overall
+table(kiri_data_clean$adult_diabetes_status, kiri_data_clean$gender_corrected) # count by sex
+
+```
+

@@ -1,0 +1,34 @@
+---
+title: "Kiribati BioMarkers Pipeline Operator's Manual"
+execute:
+  eval: false
+engine: markdown
+---
+
+This manual composes and runs the entire pipeline for cleaning, curating,
+and distributing our Kiribati BioMarkers datasets. The intended audience for
+this document is:
+
+1. Developers/data scientists who need to run the pipeline to produce outputs
+2. Developers/data scientists who need to add features
+3. Reviewers who need to ensure the accuracy and validity of the pipeline.
+
+The `/notebooks` directory provides the Quarto Manual, which is a human-facing
+interface for "operating" the pipeline. Following the pages step-by-step allows
+readers to:
+
+- Recreate the computational environment necessary for running the pipeline
+- Understand the logical flow of data from source to output
+- Identify key decision points in analysis and data curation
+- Scrutinize the codebase without having to run it locally
+- Reproduce the pipeline on your own cluster or machine
+
+As it becomes fleshed out, the pipeline diagram below provides an
+overview of the pipeline.
+
+```{mermaid}
+%%| eval: true
+%%| file: ../data/interim/pipeline.mmd
+```
+
+TEST AFTER THE DIAGRAM

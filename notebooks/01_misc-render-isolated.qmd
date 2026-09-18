@@ -1,0 +1,162 @@
+---
+title: "Render In Isolation"
+execute:
+  eval: false
+engine: markdown
+---
+
+The first page of our project establishes Quarto as our
+human-readable engineering surface. This makes use of our
+[Quarto Manual](https://goldenplanetaryhealthlab.github.io/QuartoManual/) workflow.
+
+Quarto has a notable limitation that we're still investigating.
+The gist is that we can't seem to have multiple renders running smoothly
+on the cluster, causing odd errors that are hard to debug.
+
+Use `scripts/render-isolated` when another Quarto render may be using this
+checkout. It stages a private copy of the repository on the node-local
+temporary filesystem, so each render owns its own `notebooks/.quarto/_freeze`
+directory and Quarto cache. Only a successful rendered site is copied back to
+the shared checkout.
+
+::: {.manual-prereq title="Confirm The Render And Publish Boundary"}
+
+Run this script from a checkout with `bash`, `rsync`, `mktemp`, and `quarto`
+available on `PATH`. Do not run two publishing renders against the same
+checkout at once: the staged renders are independent, but both would still
+promote their finished site into the one shared `docs/` directory.
+
+:::
+
+::: {.manual-procedure .emit-script-sh file="{{ emit.project_root }}/scripts/render-isolated" mode="0755" title="Materialize The Isolated Render Wrapper"}
+
+```bash
+#!/usr/bin/env bash
+# Render the Manual in a private staging copy. Forward any arguments to
+# `quarto render notebooks`; this avoids contention for notebooks/.quarto/_freeze.
+#
+# Usage:
+#   scripts/render-isolated.sh [quarto-render-argument ...]
+#
+# Example:
+#   scripts/render-isolated.sh --profile authoring
+set -euo pipefail
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+project_dir=$(cd "$script_dir/.." && pwd)
+stage_dir=$(mktemp -d "${TMPDIR:-/tmp}/quarto-render.XXXXXXXX")
+trap 'rm -rf -- "$stage_dir"' EXIT
+
+# Quarto's Sass cache is a Deno KV database normally kept under ~/.cache.
+# Keep all XDG state in the staging directory so concurrent jobs do not share
+# that database.
+export XDG_CACHE_HOME="$stage_dir/xdg-cache"
+export XDG_DATA_HOME="$stage_dir/xdg-data"
+export XDG_RUNTIME_DIR="$stage_dir/xdg-runtime"
+mkdir -p "$XDG_CACHE_HOME" "$XDG_DATA_HOME" "$XDG_RUNTIME_DIR"
+
+# Give this render new Quarto state. Do not copy generated site output or prior
+# render state into the staging project: the emit manifest must describe only
+# files produced by this render.
+rsync -a \
+  --exclude '.git' \
+  --exclude '.jj' \
+  --exclude 'docs' \
+  --exclude '.quarto' \
+  --exclude 'notebooks/.quarto' \
+  --exclude 'notebooks/_site' \
+  --exclude 'notebooks/site_libs' \
+  "$project_dir/" "$stage_dir/project/"
+
+(
+  cd "$stage_dir/project"
+  quarto render notebooks "$@"
+)
+
+# Quarto-emit records every generated file and its source page in this
+# manifest. Promote only those files after a successful render; never copy
+# arbitrary staged project state or pipeline outputs back to the checkout.
+emit_manifest="$stage_dir/project/.quarto/quarto-emit-manifest.tsv"
+stage_project=$(realpath -e "$stage_dir/project")
+if [[ -f "$emit_manifest" ]]; then
+  while IFS=$'\t' read -r emitted_path source_page; do
+    [[ -n "$emitted_path" && -n "$source_page" ]] || continue
+    case "$source_page" in
+      "$stage_project"/notebooks/*) ;;
+      *) echo "Refusing emit manifest source outside notebooks: $source_page" >&2; exit 1 ;;
+    esac
+
+    staged_file=$(realpath -e "$(dirname "$source_page")/$emitted_path") || {
+      echo "Generated file listed in manifest is missing: $emitted_path" >&2
+      exit 1
+    }
+    case "$staged_file" in
+      "$stage_project"/*) ;;
+      *) echo "Refusing emit target outside staged project: $staged_file" >&2; exit 1 ;;
+    esac
+
+    destination="$project_dir/${staged_file#"$stage_project"/}"
+    mkdir -p "$(dirname "$destination")"
+    rsync -a "$staged_file" "$destination"
+  done < "$emit_manifest"
+fi
+
+# docs/ is this Quarto project's configured output directory. Promote only a
+# successful staged render; --delete keeps the published site exact.
+rsync -a --delete "$stage_dir/project/docs/" "$project_dir/docs/"
+```
+
+:::
+
+Run the generated wrapper from the repository root. Any arguments after the
+script name are forwarded to `quarto render notebooks`:
+
+```sh
+scripts/render-isolated --profile authoring
+```
+
+## Profiles
+
+Quarto profiles keep the three kinds of work in this project explicit:
+`authoring` is the default for reading, editing, and previewing the Manual;
+it renders the site without loading the file-emission extension. `emit` loads
+that extension and materializes the scripts and configuration described by the
+Manual. Both profiles disable code execution completely: rendering and
+emission are host-side documentation operations, not scientific computation.
+
+They are separate because these operations have different side effects and
+review expectations. An ordinary authoring render should be safe to repeat
+without unexpectedly changing generated files or processing data. Emitting
+files is an intentional, reviewable synchronization from the Manual to its
+derived artifacts.
+
+The isolated wrapper promotes files recorded by Quarto-emit's manifest after a
+successful render, so an `emit` render updates the Manual's generated scripts
+and configuration in the checkout. It does not run targets or promote arbitrary
+data products. Run scientific work separately through the container runner after
+reviewing the emitted targets graph.
+
+::: {.manual-explain title="Why Staging Prevents The Freeze Failure"}
+
+At the end of a project render, Quarto prunes its freeze directory. Two
+processes pruning the same `notebooks/.quarto/_freeze` tree can race: one sees
+entries that the other has already removed, which can surface as `Directory not
+empty`. The staged copy gives each render a separate tree, so the prune operation
+has no shared mutable directory to remove.
+
+:::
+
+::: {.manual-check title="Verify The Generated Wrapper"}
+
+Materialize the script and check its syntax:
+
+```sh
+quarto render notebooks --profile emit --no-execute
+bash -n scripts/render-isolated
+```
+
+Confirm that `scripts/render-isolated` begins with the generated-file
+provenance header. The manual page, rather than the generated script, is the
+source of truth.
+
+:::

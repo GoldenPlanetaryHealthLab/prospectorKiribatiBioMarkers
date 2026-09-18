@@ -1,0 +1,202 @@
+---
+title: "Package Release"
+execute:
+  eval: false
+engine: markdown
+---
+
+```{r}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
+This page is the source of truth for release serialization. It turns the two
+curated participant-grain targets into a single Frictionless Data Package. The
+package descriptor carries the data dictionaries as field descriptions, so the
+release does not require separately maintained dictionary CSV files.
+
+## Describe the biomarker resource
+
+`create_schema()` infers field types and factor enumerations. This target adds
+the release-specific descriptions and fails if the description set and curated
+columns diverge.
+
+```{r}
+biomarker_ptx_dictionary_field_described_list <- {
+  biomarker_description_chr <- c(
+    uid = "De-identified record identifier",
+    hdl = "HDL cholesterol",
+    ldl = "LDL cholesterol",
+    tc = "Total cholesterol",
+    pulse = "Pulse",
+    glucose = "Glucose",
+    triglycerides = "Triglycerides",
+    systolic = "Systolic blood pressure",
+    diastolic = "Diastolic blood pressure",
+    temperature = "Temperature in Fahrenheit",
+    hemoglobin = "Hemoglobin level",
+    hematocrit = "Percentage of red blood cells",
+    diabetes = "HbA1c level",
+    age_group = "Age group",
+    fever = "Fever recorded",
+    BloodPressure_status = "Blood pressure status",
+    Glucose_status = "Glucose status",
+    anemia_status = "Anemia status",
+    cholesterol_status = "Cholesterol status",
+    triglycerides_status = "Triglycerides status",
+    diabetes_status = "Diabetes status",
+    gender = "Gender",
+    age_in_months = "Age in months at interview"
+  )
+  biomarker_schema_list <- frictionless::create_schema(
+    biomarker_clean_df
+  )
+  biomarker_field_name_chr <- vapply(
+    biomarker_schema_list$fields,
+    `[[`,
+    character(1),
+    "name"
+  )
+  if (!setequal(names(biomarker_description_chr), biomarker_field_name_chr)) {
+    stop("Biomarker field descriptions do not match the curated columns.")
+  }
+  biomarker_schema_list$fields <- lapply(
+    biomarker_schema_list$fields,
+    function(field_list) {
+      field_list$description <- unname(
+        biomarker_description_chr[[field_list$name]]
+      )
+      field_list
+    }
+  )
+
+  biomarker_schema_list
+}
+```
+
+## Describe the demographic resource
+
+```{r}
+demog_ptx_dictionary_field_described_list <- {
+  demog_description_chr <- c(
+    uid = "De-identified record identifier",
+    age_in_months = "Age in months at interview",
+    gender = "Gender",
+    village_id = "Approved non-identifying village key",
+    rururb = "Village rural/urban classification"
+  )
+  demog_schema_list <- frictionless::create_schema(
+    demog_clean_df
+  )
+  demog_field_name_chr <- vapply(
+    demog_schema_list$fields,
+    `[[`,
+    character(1),
+    "name"
+  )
+  if (!setequal(names(demog_description_chr), demog_field_name_chr)) {
+    stop("Demographic field descriptions do not match the curated columns.")
+  }
+  demog_schema_list$fields <- lapply(
+    demog_schema_list$fields,
+    function(field_list) {
+      field_list$description <- unname(demog_description_chr[[field_list$name]])
+      field_list
+    }
+  )
+
+  demog_schema_list
+}
+```
+
+## Assemble the data package
+
+The resource names are also the stable CSV basenames written by
+`write_package()`.
+
+```{r}
+release_kiribati_data_resource_packaged_list <-
+  frictionless::create_package(
+    list(
+      name = "kiribati-biomarkers",
+      title = "Kiribati Biomarkers",
+      description = paste(
+        "De-identified participant biomarker and demographic resources",
+        "for the Kiribati Biomarkers v0.1.0 release."
+      ),
+      version = "0.1.0",
+      resources = list()
+    )
+  ) |>
+  frictionless::add_resource(
+    resource_name = "biomarker_ptx",
+    data = biomarker_clean_df,
+    schema = biomarker_ptx_dictionary_field_described_list,
+    title = "Participant biomarker data"
+  ) |>
+  frictionless::add_resource(
+    resource_name = "demog_ptx",
+    data = demog_clean_df,
+    schema = demog_ptx_dictionary_field_described_list,
+    title = "De-identified participant demographic data"
+  )
+```
+
+## Publish the immutable release
+
+Versioned releases are immutable. This target refuses to write into a nonempty
+version directory, which prevents `write_package()` from retaining stale CSVs.
+Changed release content requires a new version directory.
+
+```{r}
+#| format: file
+release_kiribati_data_file_published_chr <- {
+  release_output_directory_chr <- here::here(
+    "data",
+    "outputs",
+    "releases",
+    "v0.1.0"
+  )
+  release_expected_file_chr <- file.path(
+    release_output_directory_chr,
+    c("datapackage.json", "biomarker_ptx.csv", "demog_ptx.csv")
+  )
+
+  if (
+    dir.exists(release_output_directory_chr) &&
+      length(
+        list.files(
+          release_output_directory_chr,
+          all.files = TRUE,
+          no.. = TRUE
+        )
+      )
+  ) {
+    stop(
+      "Release directory is nonempty and versioned releases are immutable: ",
+      release_output_directory_chr
+    )
+  }
+
+  dir.create(
+    release_output_directory_chr,
+    recursive = TRUE,
+    showWarnings = FALSE
+  )
+  frictionless::write_package(
+    release_kiribati_data_resource_packaged_list,
+    directory = release_output_directory_chr
+  )
+
+  release_missing_file_chr <- release_expected_file_chr[
+    !file.exists(release_expected_file_chr)
+  ]
+  if (length(release_missing_file_chr)) {
+    stop(
+      "Frictionless did not write the expected release files: ",
+      paste(release_missing_file_chr, collapse = ", ")
+    )
+  }
+
+  release_expected_file_chr
+}
+```

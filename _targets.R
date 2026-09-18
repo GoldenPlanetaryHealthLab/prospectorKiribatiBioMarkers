@@ -9,7 +9,9 @@ library(tarchetypes) # Load other packages as needed.
 
 # Set target options:
 tar_option_set(
-  packages = c("here") # Packages that your targets need for their tasks.
+  packages = c(
+    "digest", "dplyr", "frictionless", "here", "lubridate", "readr", "tibble", "stringr"
+  ) # Packages that your targets need for their tasks.
   # format = "qs", # Optionally set the default storage format. qs is fast.
   #
   # Pipelines that take a long time to run may benefit from
@@ -45,25 +47,13 @@ tar_option_set(
 )
 
 # Run the R scripts in the R/ folder with your custom functions:
-# tar_source()
+tar_source()
 # tar_source("other_functions.R") # Source other scripts as needed.
 
 # Replace the target list below with your own:
-list(
-  
-  # extract default pipeline from the targets notebook
-  #tar_tangle("_target_notebook.Rmd") #,
-  tar_tangle("dev/Pipeline.qmd"),
-  tar_render("vignettes/data_validation.Rmd")
 
-  # you can now add more targets here if needed, e.g.:
-  # tar_target(
-  #   name = data,
-  #   command = tibble(x = rnorm(100), y = rnorm(100))
-  #   # format = "qs" # Efficient storage for general data objects.
-  # ),
-  # tar_target(
-  #   name = model,
-  #   command = coefficients(lm(y ~ x, data = data))
-  # )
+list(
+  tarchetypes::tar_tangle("notebooks/pipeline/16_page-stage-inputs.qmd"),
+  tarchetypes::tar_tangle("notebooks/pipeline/18_page-targets-curation.qmd"),
+  tarchetypes::tar_tangle("notebooks/pipeline/19_page-package-release.qmd")
 )
